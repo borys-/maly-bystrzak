@@ -1,75 +1,70 @@
-﻿# Sudoku dla dzieci - generator książeczek
+# Mały Bystrzak
 
-Konsolowy generator kolorowych książeczek Sudoku 4×4 i 6×6. Tworzy dwa pliki PDF:
+„Mały Bystrzak” to działający bez backendu generator drukowanych książeczek z zadaniami dla dzieci. Aplikacja obsługuje Sudoku 4×4 i 6×6 oraz Kakuro 3×3 i 4×4, książeczki mieszane, sześć poziomów trudności, wynik poznawczy 0–100 i odtwarzalne ziarno.
 
-- `sudoku-podglad-a5.pdf` - strony A5 w naturalnej kolejności,
-- `sudoku-broszura-a4.pdf` - arkusze A4 z impozycją do druku dwustronnego i złożenia na pół.
+Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
 
-Każda pełna strona A5 mieści sześć zadań w układzie 2×3. Zadania przechodzą przez sześć kolorowych poziomów oznaczonych od 1 do 6 gwiazdek i zawsze mają dokładnie jedno rozwiązanie.
+> Aplikacja zostanie udostępniona pod tym adresem po pierwszym, ręcznie zatwierdzonym wdrożeniu GitHub Pages.
 
-Przy każdym zadaniu drukowany jest heurystyczny wskaźnik obciążenia `0–100`. W katalogu wynikowym powstaje także `raport-trudnosci.csv` z częściowymi metrykami oraz pustymi kolumnami do zapisania czasu, błędów, podpowiedzi, wysiłku dziecka i ukończenia zadania. Wskaźnik służy do stopniowania ćwiczeń, a nie do diagnozy psychologicznej.
+## Możliwości
 
-Generator obsługuje także dziecięce Kakuro 3×3 i 4×4 z sumami poziomymi i pionowymi:
+- podgląd PDF A5 w naturalnej kolejności;
+- broszura PDF A4 z impozycją do druku dwustronnego;
+- sześć zadań na stronie i opcjonalna sekcja rozwiązań;
+- raport trudności CSV;
+- personalizacja tytułu, podtytułu i imienia dziecka;
+- zakres wyniku trudności i względne gwiazdki;
+- lokalny zapis projektów w IndexedDB;
+- instalowalna aplikacja PWA działająca offline po pierwszym pełnym otwarciu;
+- responsywny interfejs na komputer, tablet i telefon.
 
-```powershell
-dotnet run --project src/MalyBystrzak.Cli -- kakuro --count 60 --child-name "Julka" --output ./output/kakuro/Julka
-dotnet run --project src/MalyBystrzak.Cli -- kakuro --size 4 --count 60 --child-name "Julka" --output ./output/kakuro4x4/Julka
-```
+Treść książeczek i zapisane projekty nie są wysyłane poza urządzenie użytkownika.
 
-Plik `generuj-ksiazeczki-kakuro.bat` tworzy książeczki 3×3, a `generuj-ksiazeczki-kakuro-4x4.bat` książeczki 4×4.
+## Architektura
 
-## Książeczki mieszane
+- `MalyBystrzak.Core` — modele książeczek, kontrakty modułów i orkiestracja generowania;
+- `MalyBystrzak.Modules.Sudoku` — generator i solver Sudoku;
+- `MalyBystrzak.Modules.Kakuro` — generator i solver Kakuro;
+- `MalyBystrzak.Pdf` — wspólny renderer PDFsharp Core dla CLI i Web;
+- `MalyBystrzak.Cli` — zgodny wstecznie interfejs konsolowy;
+- `MalyBystrzak.Web` — samodzielna aplikacja Blazor WebAssembly PWA;
+- `MalyBystrzak.Tests` — testy domenowe i integracyjne;
+- `MalyBystrzak.Web.E2E` — scenariusze przeglądarkowe Playwright.
 
-Polecenie `mixed` przeplata wybrane rodzaje zadań. Domyślnie używa Sudoku 4×4, Sudoku 6×6 i różnych plansz Kakuro:
+Moduły zadań implementują `IWorksheetModule` i zwracają neutralny model wizualny. Renderer PDF i aplikacja Web nie zawierają centralnych instrukcji `switch` zależnych od rodzaju zadania.
 
-```powershell
-dotnet run --project src/MalyBystrzak.Cli -- mixed --types sudoku4,sudoku6,kakuro3,kakuro4 --count 60 --child-name "Julka" --output ./output/mieszane/Julka
-```
+## Uruchomienie lokalne
 
-Można podać dowolny podzbiór, np. `--types sudoku4,kakuro`. Plik `generuj-ksiazeczki-mieszane.bat` tworzy gotowe mieszane książeczki dla całej trójki dzieci.
-
-### Personalizowane zakresy
-
-Plik `generuj-108-personalizowane.bat` tworzy po 108 zadań dla każdego dziecka: Olga 0–80, Antek 20–80, Julka 20–100. Daje to 18 pełnych stron z zadaniami oraz okładki, bez pustych stron. Zadania są sortowane według wskaźnika i dzielone możliwie równo na grupy gwiazdkowe: 22, 22, 22, 21 i 21. Gwiazdki oznaczają względną trudność w danej książeczce, nie stałe progi wskaźnika.
-
-```powershell
-dotnet run --project src/MalyBystrzak.Cli -- mixed --types sudoku4,sudoku6,kakuro3,kakuro4 --count 108 --score-min 20 --score-max 80 --relative-stars --child-name "Antek" --output ./output/personalizowane/Antek
-```
-
-## Wymagania
-
-- .NET SDK 8.0 lub nowszy.
-
-## Uruchomienie
-
-### Gotowe książeczki dla Julki, Antka i Olgi
-
-Na Windows dostępne są dwa skrypty uruchamiane dwukrotnym kliknięciem:
-
-- `generuj-ksiazeczki-4x4.bat` tworzy zestawy w katalogu `output\4x4`,
-- `generuj-ksiazeczki-6x6.bat` tworzy zestawy w katalogu `output\6x6`.
-
-Każdy skrypt generuje po jednej książeczce dla Julki, Antka i Olgi. Ponowne uruchomienie odtwarza te same zestawy i zastępuje wcześniejsze pliki.
-
-### Ręczne uruchomienie
+Wymagany jest .NET SDK 8.
 
 ```powershell
-dotnet run --project src/MalyBystrzak.Cli -- generate --output ./output --count 60 --size 4
+dotnet restore MalyBystrzak.sln
+dotnet run --project src/MalyBystrzak.Web
 ```
 
-Personalizowana okładka:
+Po uruchomieniu należy użyć adresu wyświetlonego przez `dotnet run`.
+
+## CLI
+
+Sudoku 4×4:
 
 ```powershell
-dotnet run --project src/MalyBystrzak.Cli -- generate --child-name "Zosia" --title "Moja książeczka Sudoku"
+dotnet run --project src/MalyBystrzak.Cli -- generate --count 60 --size 4 --output ./output
 ```
 
-Książeczka 6×6 z odtwarzalnym zestawem:
+Kakuro 4×4:
 
 ```powershell
-dotnet run --project src/MalyBystrzak.Cli -- generate --size 6 --count 72 --seed 12345
+dotnet run --project src/MalyBystrzak.Cli -- kakuro --count 60 --size 4 --child-name "Julka" --output ./output/kakuro
 ```
 
-Pełna lista opcji:
+Książeczka mieszana:
+
+```powershell
+dotnet run --project src/MalyBystrzak.Cli -- mixed --types sudoku4,sudoku6,kakuro3,kakuro4 --count 108 --score-min 20 --score-max 80 --relative-stars --seed 12345 --output ./output/mieszane
+```
+
+Pełna lista zgodnych wstecznie argumentów:
 
 ```powershell
 dotnet run --project src/MalyBystrzak.Cli -- --help
@@ -77,22 +72,28 @@ dotnet run --project src/MalyBystrzak.Cli -- --help
 
 ## Drukowanie broszury
 
-Otwórz `sudoku-broszura-a4.pdf` i wybierz:
+W oknie drukowania pliku `*-broszura-a4.pdf` wybierz papier A4, orientację poziomą, skalę 100%, druk dwustronny i obrót po krótkiej krawędzi. Zachowaj kolejność arkuszy, złóż stos na pół i zszyj na grzbiecie.
 
-1. papier A4, orientacja pozioma,
-2. skala 100% / rzeczywisty rozmiar,
-3. druk dwustronny,
-4. obrót po krótkiej krawędzi.
+## Testy
 
-Zachowaj kolejność wydrukowanych arkuszy, złóż cały stos na pół i zszyj na grzbiecie.
-
-## Testy i publikacja
+Testy domenowe i integracyjne:
 
 ```powershell
-dotnet test MalyBystrzak.sln -c Release
-dotnet publish src/MalyBystrzak.Cli -c Release -r win-x64 --self-contained false
+dotnet test tests/MalyBystrzak.Tests/MalyBystrzak.Tests.csproj -c Release
 ```
 
-Opcja `--seed` jest wypisywana w konsoli i na tylnej okładce, dzięki czemu ten sam zestaw można wygenerować ponownie.
+Testy przeglądarkowe samodzielnie uruchamiają lokalny serwer aplikacji:
 
+```powershell
+dotnet build MalyBystrzak.sln -c Release
+pwsh tests/MalyBystrzak.Web.E2E/bin/Release/net8.0/playwright.ps1 install chromium
+dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
+```
 
+## GitHub Pages
+
+Workflow „Weryfikacja i publikacja GitHub Pages” jest uruchamiany wyłącznie ręcznie przez `workflow_dispatch`. Wykonuje kompilację, testy domenowe, testy Playwright oraz publikację aplikacji pod ścieżką `/maly-bystrzak/`. Sam push do gałęzi `main` nie uruchamia buildu ani wdrożenia.
+
+## Licencja
+
+Projekt jest publiczny. Warunki ponownego użycia zostaną określone przed pierwszym wydaniem.
