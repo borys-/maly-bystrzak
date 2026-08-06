@@ -1,10 +1,8 @@
 # Mały Bystrzak
 
-„Mały Bystrzak” to działający bez backendu generator drukowanych książeczek z zadaniami dla dzieci. Aplikacja obsługuje Sudoku 4×4 i 6×6 oraz Kakuro 3×3 i 4×4, książeczki mieszane, sześć poziomów trudności, wynik poznawczy 0–100 i odtwarzalne ziarno.
+„Mały Bystrzak” to działający bez backendu generator drukowanych książeczek z zadaniami dla dzieci w wieku 7–10 lat. Aplikacja obsługuje Sudoku 4×4 i 6×6, Kakuro 3×3 i 4×4, labirynty 9×9 i 15×15 oraz nonogramy 5×5, 7×7 i 10×10. Pozwala tworzyć książeczki mieszane z sześcioma poziomami trudności, wynikiem poznawczym 0–100 i odtwarzalnym ziarnem.
 
 Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
-
-> Aplikacja zostanie udostępniona pod tym adresem po pierwszym, ręcznie zatwierdzonym wdrożeniu GitHub Pages.
 
 ## Możliwości
 
@@ -25,8 +23,10 @@ Treść książeczek i zapisane projekty nie są wysyłane poza urządzenie uży
 - `MalyBystrzak.Core` — modele książeczek, kontrakty modułów i orkiestracja generowania;
 - `MalyBystrzak.Modules.Sudoku` — generator i solver Sudoku;
 - `MalyBystrzak.Modules.Kakuro` — generator i solver Kakuro;
+- `MalyBystrzak.Modules.Mazes` — generator doskonałych labiryntów z jednym rozwiązaniem;
+- `MalyBystrzak.Modules.Nonograms` — generator i solver jednoznacznych nonogramów;
 - `MalyBystrzak.Pdf` — wspólny renderer PDFsharp Core dla CLI i Web;
-- `MalyBystrzak.Cli` — zgodny wstecznie interfejs konsolowy;
+- `MalyBystrzak.Cli` — interfejs konsolowy korzystający z tych samych modułów i PDF;
 - `MalyBystrzak.Web` — samodzielna aplikacja Blazor WebAssembly PWA;
 - `MalyBystrzak.Tests` — testy domenowe i integracyjne;
 - `MalyBystrzak.Web.E2E` — scenariusze przeglądarkowe Playwright.
@@ -58,13 +58,25 @@ Kakuro 4×4:
 dotnet run --project src/MalyBystrzak.Cli -- kakuro --count 60 --size 4 --child-name "Julka" --output ./output/kakuro
 ```
 
+Labirynt 15×15:
+
+```powershell
+dotnet run --project src/MalyBystrzak.Cli -- maze --count 24 --size 15 --output ./output/labirynty
+```
+
+Nonogram 10×10:
+
+```powershell
+dotnet run --project src/MalyBystrzak.Cli -- nonogram --count 18 --size 10 --output ./output/nonogramy
+```
+
 Książeczka mieszana:
 
 ```powershell
-dotnet run --project src/MalyBystrzak.Cli -- mixed --types sudoku4,sudoku6,kakuro3,kakuro4 --count 108 --score-min 20 --score-max 80 --relative-stars --seed 12345 --output ./output/mieszane
+dotnet run --project src/MalyBystrzak.Cli -- mixed --types sudoku4,kakuro4,maze9,nonogram7 --count 108 --score-min 20 --score-max 80 --relative-stars --seed 12345 --output ./output/mieszane
 ```
 
-Pełna lista zgodnych wstecznie argumentów:
+Pełna lista argumentów:
 
 ```powershell
 dotnet run --project src/MalyBystrzak.Cli -- --help
