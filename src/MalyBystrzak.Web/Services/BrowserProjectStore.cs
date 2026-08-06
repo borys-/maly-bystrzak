@@ -22,12 +22,9 @@ public sealed class BrowserProjectStore(IJSRuntime js, BookGenerator generator) 
         {
             using var document = JsonDocument.Parse(json);
             if (!document.RootElement.TryGetProperty("schemaVersion", out var versionElement)) return null;
-            return versionElement.GetInt32() switch
-            {
-                GeneratorProject.CurrentSchemaVersion => RestoreCompactProject(json),
-                1 => RestoreLegacyProject(json),
-                _ => null
-            };
+            return versionElement.GetInt32() == GeneratorProject.CurrentSchemaVersion
+                ? RestoreCompactProject(json)
+                : null;
         }
         catch (Exception exception) when (exception is JsonException or ArgumentException or InvalidOperationException)
         {
@@ -51,12 +48,6 @@ public sealed class BrowserProjectStore(IJSRuntime js, BookGenerator generator) 
         var stored = JsonSerializer.Deserialize<StoredGeneratorProject>(json, JsonOptions);
         return stored is null ? null : new(GeneratorProject.CurrentSchemaVersion, stored.Id, stored.Name,
             stored.UpdatedAt, generator.Generate(stored.Settings));
-    }
-
-    private static GeneratorProject? RestoreLegacyProject(string json)
-    {
-        var project = JsonSerializer.Deserialize<GeneratorProject>(json, JsonOptions);
-        return project is null ? null : project with { SchemaVersion = GeneratorProject.CurrentSchemaVersion };
     }
 
     private sealed record StoredGeneratorProject(int SchemaVersion, Guid Id, string Name, DateTimeOffset UpdatedAt,
