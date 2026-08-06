@@ -48,6 +48,8 @@ public class NonogramGeneratorTests
         Assert.All(worksheets, worksheet =>
         {
             Assert.Contains(worksheet.Task.Elements, element => element is VisualText);
+            Assert.Contains(worksheet.Task.Elements.OfType<VisualRectangle>(), rectangle => rectangle.Fill == "#f4f7ff");
+            Assert.Contains(worksheet.Task.Elements.OfType<VisualLine>(), line => line.Width >= 1);
             Assert.Contains(worksheet.Solution.Elements.OfType<VisualRectangle>(), rectangle => rectangle.Fill == "#25316d");
             Assert.Equal("Nonogram", worksheet.Instruction.Title);
         });

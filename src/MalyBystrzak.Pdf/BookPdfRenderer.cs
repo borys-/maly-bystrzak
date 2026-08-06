@@ -184,8 +184,20 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
                 case VisualText text:
                     var x = originX + text.X * scale;
                     var y = originY + text.Y * scale;
+                    var textBounds = text.Anchor switch
+                    {
+                        "end" => new XRect(x - 70 * scale, y - text.Size * scale, 70 * scale, text.Size * 1.5 * scale),
+                        "start" => new XRect(x, y - text.Size * scale, 70 * scale, text.Size * 1.5 * scale),
+                        _ => new XRect(x - 35 * scale, y - text.Size * scale, 70 * scale, text.Size * 1.5 * scale)
+                    };
+                    var textFormat = text.Anchor switch
+                    {
+                        "end" => XStringFormats.CenterRight,
+                        "start" => XStringFormats.CenterLeft,
+                        _ => XStringFormats.Center
+                    };
                     graphics.DrawString(text.Text, Font(text.Size * scale, text.Bold), Brush(text.Color),
-                        new XRect(x - 35 * scale, y - text.Size * scale, 70 * scale, text.Size * 1.5 * scale), XStringFormats.Center);
+                        textBounds, textFormat);
                     break;
             }
         }

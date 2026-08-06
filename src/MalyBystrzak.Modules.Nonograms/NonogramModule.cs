@@ -44,27 +44,41 @@ public sealed class NonogramModule : IWorksheetModule
     private static WorksheetVisual CreateVisual(NonogramPuzzle puzzle, bool solution)
     {
         const double canvas = 100;
-        var clueMargin = puzzle.Size == 10 ? 27d : 24d;
+        var clueMargin = puzzle.Size switch { 10 => 26d, 7 => 21d, _ => 20d };
         var gridSize = canvas - clueMargin - 3;
         var cell = gridSize / puzzle.Size;
         var elements = new List<VisualElement>();
+        elements.Add(new VisualRectangle(2, clueMargin, clueMargin - 4, gridSize, "#f4f7ff", "none"));
+        elements.Add(new VisualRectangle(clueMargin, 2, gridSize, clueMargin - 4, "#f4f7ff", "none"));
         for (var row = 0; row < puzzle.Size; row++)
         for (var column = 0; column < puzzle.Size; column++)
         {
             var x = clueMargin + column * cell;
             var y = clueMargin + row * cell;
             var filled = solution && puzzle.Cells[row * puzzle.Size + column];
-            elements.Add(new VisualRectangle(x, y, cell, cell, filled ? "#25316d" : "#ffffff", "#25316d", .45));
+            elements.Add(new VisualRectangle(x, y, cell, cell, filled ? "#25316d" : "#fffefa", "#25316d", 0));
         }
-        var font = puzzle.Size == 10 ? 3.7 : 4.8;
+        for (var index = 0; index <= puzzle.Size; index++)
+        {
+            var width = index is 0 || index == puzzle.Size || (puzzle.Size == 10 && index == 5) ? 1.05 : .38;
+            elements.Add(new VisualLine(clueMargin + index * cell, clueMargin,
+                clueMargin + index * cell, clueMargin + gridSize, width, "#25316d"));
+            elements.Add(new VisualLine(clueMargin, clueMargin + index * cell,
+                clueMargin + gridSize, clueMargin + index * cell, width, "#25316d"));
+        }
+        var font = puzzle.Size == 10 ? 3.5 : 4.5;
         for (var row = 0; row < puzzle.Size; row++)
-            elements.Add(new VisualText(clueMargin - 2, clueMargin + (row + .63) * cell,
-                string.Join(' ', puzzle.RowClues[row]), font, "#25316d", true, "end"));
+        {
+            var clues = puzzle.RowClues[row];
+            for (var index = 0; index < clues.Length; index++)
+                elements.Add(new VisualText(clueMargin - 2.5 - (clues.Length - 1 - index) * (font + 1),
+                    clueMargin + (row + .64) * cell, clues[index].ToString(), font, "#25316d", true, "end"));
+        }
         for (var column = 0; column < puzzle.Size; column++)
         {
             var clues = puzzle.ColumnClues[column];
-            var step = puzzle.Size == 10 ? 4.2 : 5.2;
-            var startY = clueMargin - 3 - (clues.Length - 1) * step;
+            var step = puzzle.Size == 10 ? 4 : 5;
+            var startY = clueMargin - 3.2 - (clues.Length - 1) * step;
             for (var index = 0; index < clues.Length; index++)
                 elements.Add(new VisualText(clueMargin + (column + .5) * cell, startY + index * step,
                     clues[index].ToString(), font, "#25316d", true));
