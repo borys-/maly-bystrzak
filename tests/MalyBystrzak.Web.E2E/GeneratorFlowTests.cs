@@ -103,4 +103,28 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         Assert.Equal(dimensions[0], dimensions[1]);
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
     }
+
+    [Fact]
+    public async Task PublishedPwaWorksOfflineAfterFirstLoad()
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("MALY_BYSTRZAK_PUBLISHED_DIR")))
+            return;
+
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.EvaluateAsync("() => navigator.serviceWorker.ready");
+        await Page.ReloadAsync();
+        await Page.WaitForFunctionAsync("() => navigator.serviceWorker.controller !== null");
+
+        await Context.SetOfflineAsync(true);
+        try
+        {
+            await Page.ReloadAsync();
+            await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
+            await Expect(Page).ToHaveTitleAsync("Mały Bystrzak — generator książeczek dla dzieci");
+        }
+        finally
+        {
+            await Context.SetOfflineAsync(false);
+        }
+    }
 }

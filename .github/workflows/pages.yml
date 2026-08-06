@@ -36,11 +36,13 @@ jobs:
       - name: Uruchom testy domenowe i integracyjne
         run: dotnet test tests/MalyBystrzak.Tests/MalyBystrzak.Tests.csproj -c Release --no-build
 
-      - name: Uruchom testy przeglądarkowe
-        run: dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
-
       - name: Opublikuj aplikację WebAssembly
         run: dotnet publish src/MalyBystrzak.Web/MalyBystrzak.Web.csproj -c Release --no-build -o publish
+
+      - name: Uruchom testy przeglądarkowe opublikowanej aplikacji
+        run: dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
+        env:
+          MALY_BYSTRZAK_PUBLISHED_DIR: ${{ github.workspace }}/publish/wwwroot
 
       - name: Przygotuj aplikację dla ścieżki GitHub Pages
         shell: pwsh
