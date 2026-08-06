@@ -16,6 +16,8 @@ jobs:
   build-and-test:
     name: Kompilacja i testy
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright/dotnet:v1.61.0-noble
     steps:
       - name: Pobierz repozytorium
         uses: actions/checkout@v4
@@ -33,10 +35,6 @@ jobs:
 
       - name: Uruchom testy domenowe i integracyjne
         run: dotnet test tests/MalyBystrzak.Tests/MalyBystrzak.Tests.csproj -c Release --no-build
-
-      - name: Zainstaluj Chromium dla Playwright
-        shell: pwsh
-        run: tests/MalyBystrzak.Web.E2E/bin/Release/net8.0/playwright.ps1 install --with-deps chromium
 
       - name: Uruchom testy przeglądarkowe
         run: dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
