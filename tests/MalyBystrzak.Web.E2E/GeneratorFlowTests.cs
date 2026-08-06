@@ -18,7 +18,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         Assert.Equal("none", focusedHeadingOutline);
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
-        await Expect(Page.GetByLabel("Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.")).Not.ToBeCheckedAsync();
+        await Expect(Page.GetByRole(AriaRole.Checkbox, new() { Name = "Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.", Exact = true })).Not.ToBeCheckedAsync();
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     public async Task RestoresLastGeneratorPreferencesAfterReload()
     {
         await Page.GotoAsync(server.BaseUrl);
-        await Page.GetByLabel("Tytuł").FillAsync("Zapamiętana książeczka");
+        await Page.GetByRole(AriaRole.Textbox, new() { Name = "Tytuł", Exact = true }).FillAsync("Zapamiętana książeczka");
         await Page.GetByLabel("Liczba zadań").FillAsync("5");
         await Page.GetByTestId("variant-kakuro-3x3").ClickAsync();
         await Page.GetByTestId("generate").ClickAsync();
@@ -112,7 +112,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
 
         await Page.ReloadAsync();
 
-        await Expect(Page.GetByLabel("Tytuł")).ToHaveValueAsync("Zapamiętana książeczka");
+        await Expect(Page.GetByRole(AriaRole.Textbox, new() { Name = "Tytuł", Exact = true })).ToHaveValueAsync("Zapamiętana książeczka");
         await Expect(Page.GetByLabel("Liczba zadań")).ToHaveValueAsync("5");
         await Expect(Page.GetByTestId("variant-kakuro-3x3").Locator("input")).ToBeCheckedAsync();
     }
@@ -121,12 +121,12 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     public async Task DrawsNewSeedOnEveryFreshPageLoad()
     {
         await Page.GotoAsync(server.BaseUrl);
-        var seedInput = Page.GetByLabel("Ziarno zestawu ↻");
+        var seedInput = Page.GetByRole(AriaRole.Spinbutton, new() { Name = "Ziarno zestawu ↻", Exact = true });
         var firstSeed = await seedInput.InputValueAsync();
 
         await Page.ReloadAsync();
 
-        var secondSeed = await Page.GetByLabel("Ziarno zestawu ↻").InputValueAsync();
+        var secondSeed = await Page.GetByRole(AriaRole.Spinbutton, new() { Name = "Ziarno zestawu ↻", Exact = true }).InputValueAsync();
         Assert.NotEqual(firstSeed, secondSeed);
     }
 
