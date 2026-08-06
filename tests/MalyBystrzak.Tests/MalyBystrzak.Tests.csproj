@@ -15,6 +15,7 @@
     <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Kakuro\MalyBystrzak.Modules.Kakuro.csproj" />
     <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Mazes\MalyBystrzak.Modules.Mazes.csproj" />
     <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Sequences\MalyBystrzak.Modules.Sequences.csproj" />
+    <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Nonograms\MalyBystrzak.Modules.Nonograms.csproj" />
     <ProjectReference Include="..\..\src\MalyBystrzak.Pdf\MalyBystrzak.Pdf.csproj" />
   </ItemGroup>
 </Project>
