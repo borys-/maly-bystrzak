@@ -46,6 +46,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     public async Task IgnoresCorruptedAndUnsupportedProjects()
     {
         await Page.GotoAsync(server.BaseUrl);
+        await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
         await Page.EvaluateAsync("""
             async () => {
               const db = await new Promise((resolve, reject) => {
