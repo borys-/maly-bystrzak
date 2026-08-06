@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" role="img" aria-label="Mały Bystrzak — otwarta książeczka">
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#25316d"/>
+  <circle cx="414" cy="102" r="18" fill="#ffd966"/>
+  <circle cx="104" cy="112" r="12" fill="#8edbc4"/>
+  <path d="M256 198C218 166 164 150 88 160v210c72-10 128 8 168 42z" fill="#fffdf8"/>
+  <path d="M256 198c38-32 92-48 168-38v210c-72-10-128 8-168 42z" fill="#fffdf8"/>
+  <path d="M256 198v214" fill="none" stroke="#88ccf1" stroke-width="12" stroke-linecap="round"/>
+  <path d="M122 216c45-2 81 8 105 26M122 268c45-2 81 8 105 26M122 320c45-2 81 8 105 26" fill="none" stroke="#88ccf1" stroke-width="12" stroke-linecap="round"/>
+  <path d="M390 216c-45-2-81 8-105 26M390 268c-45-2-81 8-105 26M390 320c-45-2-81 8-105 26" fill="none" stroke="#8edbc4" stroke-width="12" stroke-linecap="round"/>
+  <path d="M256 174c-34-25-66-46-66-79 0-38 50-52 66-18 16-34 66-20 66 18 0 33-32 54-66 79z" fill="#f15a8a" stroke="#25316d" stroke-width="8" stroke-linejoin="round"/>
+</svg>
