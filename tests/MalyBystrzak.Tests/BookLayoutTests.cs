@@ -37,7 +37,8 @@ public class BookLayoutTests
     {
         var visual = new WorksheetVisual(100, 100, []);
         var difficulty = CognitiveDifficulty.Create(20, 20, 20, 20, 20, 0);
+        var instruction = new WorksheetInstruction("Fake", "Pierwsza linia", "Druga linia", "#25316d");
         return Enumerable.Range(1, count).Select(number => new GeneratedWorksheet(number, "fake", "a", "Fake",
-            number.ToString(), difficulty, 2, visual, visual)).ToArray();
+            number.ToString(), difficulty, 2, visual, visual, instruction)).ToArray();
     }
 }

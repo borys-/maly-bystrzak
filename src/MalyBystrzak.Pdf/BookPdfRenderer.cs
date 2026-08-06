@@ -161,6 +161,21 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
                     graphics.DrawLine(new XPen(Color(line.Color), line.Width * scale), originX + line.X1 * scale,
                         originY + line.Y1 * scale, originX + line.X2 * scale, originY + line.Y2 * scale);
                     break;
+                case VisualEllipse ellipse:
+                    var ellipseRect = new XRect(originX + (ellipse.CenterX - ellipse.RadiusX) * scale,
+                        originY + (ellipse.CenterY - ellipse.RadiusY) * scale,
+                        ellipse.RadiusX * 2 * scale, ellipse.RadiusY * 2 * scale);
+                    if (ellipse.Fill != "none") graphics.DrawEllipse(Brush(ellipse.Fill), ellipseRect);
+                    if (ellipse.Stroke != "none" && ellipse.StrokeWidth > 0)
+                        graphics.DrawEllipse(new XPen(Color(ellipse.Stroke), ellipse.StrokeWidth * scale), ellipseRect);
+                    break;
+                case VisualPolygon polygon:
+                    var points = polygon.Points.Select(point => new XPoint(originX + point.X * scale,
+                        originY + point.Y * scale)).ToArray();
+                    if (polygon.Fill != "none") graphics.DrawPolygon(Brush(polygon.Fill), points, XFillMode.Winding);
+                    if (polygon.Stroke != "none" && polygon.StrokeWidth > 0)
+                        graphics.DrawPolygon(new XPen(Color(polygon.Stroke), polygon.StrokeWidth * scale), points);
+                    break;
                 case VisualText text:
                     var x = originX + text.X * scale;
                     var y = originY + text.Y * scale;

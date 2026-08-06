@@ -3,7 +3,8 @@ namespace MalyBystrzak.Core;
 public enum BookPageKind { FrontCover, Worksheets, Solutions, Blank, BackCover }
 public sealed record BookPage(BookPageKind Kind, IReadOnlyList<GeneratedWorksheet>? Worksheets = null);
 public sealed record SheetSide(int LeftPage, int RightPage);
-public sealed record BookDocument(BookGenerationSettings Settings, IReadOnlyList<BookPage> Pages);
+public sealed record BookDocument(BookGenerationSettings Settings, IReadOnlyList<BookPage> Pages,
+    IReadOnlyList<WorksheetInstruction> Instructions);
 
 public static class BookLayout
 {

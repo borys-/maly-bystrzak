@@ -44,7 +44,7 @@
                     {
                         <label class="variant-option @(choice.Selected ? "selected" : null)" data-testid="@($"variant-{choice.ModuleId}-{choice.VariantId}")">
                             <input type="checkbox" @bind="choice.Selected" />
-                            <span class="variant-icon">@(choice.ModuleId == "sudoku" ? "#" : "+")</span>
+                            <span class="variant-icon">@choice.Symbol</span>
                             <span><strong>@choice.Name</strong><small>@choice.Description</small></span>
                             <i aria-hidden="true">✓</i>
                         </label>
@@ -197,7 +197,7 @@
     {
         foreach (var module in Registry.All)
         foreach (var variant in module.Variants)
-            choices.Add(new(module.Id, variant.Id, variant.DisplayName, variant.Description,
+            choices.Add(new(module.Id, variant.Id, variant.DisplayName, variant.Description, module.Symbol,
                 module.Id == "sudoku" && variant.Id == "4x4"));
         await RestorePreferencesAsync();
         await RefreshProjectsAsync();
@@ -326,12 +326,13 @@
 
     private static string Dots(int count) => new('●', count);
 
-    private sealed class VariantChoice(string moduleId, string variantId, string name, string description, bool selected)
+    private sealed class VariantChoice(string moduleId, string variantId, string name, string description, string symbol, bool selected)
     {
         public string ModuleId { get; } = moduleId;
         public string VariantId { get; } = variantId;
         public string Name { get; } = name;
         public string Description { get; } = description;
+        public string Symbol { get; } = symbol;
         public bool Selected { get; set; } = selected;
     }
 }

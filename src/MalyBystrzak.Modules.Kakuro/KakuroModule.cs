@@ -5,8 +5,12 @@ namespace MalyBystrzak.Modules.Kakuro;
 
 public sealed class KakuroModule : IWorksheetModule
 {
+    private static readonly WorksheetInstruction ModuleInstruction = new("Kakuro",
+        "Wpisz cyfry 1-9, aby otrzymać podane sumy.", "W jednej grupie cyfry nie mogą się powtarzać.", "#8edbc4");
     public string Id => "kakuro";
     public string DisplayName => "Kakuro";
+    public string Symbol => "+";
+    public WorksheetInstruction Instruction => ModuleInstruction;
     public IReadOnlyList<WorksheetVariant> Variants { get; } =
     [new("3x3", "Kakuro 3 × 3", "Pierwsze zadania z sumami"), new("4x4", "Kakuro 4 × 4", "Większe zadania z sumami")];
 
@@ -39,7 +43,7 @@ public sealed class KakuroModule : IWorksheetModule
     {
         var metrics = puzzle.CognitiveDifficulty;
         return new(puzzle.Number, "kakuro", $"{puzzle.Size}x{puzzle.Size}", $"Kakuro {puzzle.Size}x{puzzle.Size}",
-            Fingerprint(puzzle), metrics, metrics.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true));
+            Fingerprint(puzzle), metrics, metrics.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true), ModuleInstruction);
     }
 
     private static WorksheetVisual CreateVisual(KakuroPuzzle puzzle, bool solution)

@@ -7,8 +7,9 @@ public sealed record BookGenerationSettings(
 
 public sealed record GeneratedBook(BookGenerationSettings Settings, IReadOnlyList<GeneratedWorksheet> Worksheets)
 {
-    public BookDocument CreateDocument() => new(Settings, BookLayout.BuildPages(Worksheets, Settings.IncludeSolutions));
-    public BookDocument CreateSolutionsDocument() => new(Settings, BookLayout.BuildSolutionPages(Worksheets));
+    private IReadOnlyList<WorksheetInstruction> Instructions => Worksheets.Select(item => item.Instruction).Distinct().ToArray();
+    public BookDocument CreateDocument() => new(Settings, BookLayout.BuildPages(Worksheets, Settings.IncludeSolutions), Instructions);
+    public BookDocument CreateSolutionsDocument() => new(Settings, BookLayout.BuildSolutionPages(Worksheets), Instructions);
 }
 
 public sealed record GeneratorProject(
@@ -18,7 +19,7 @@ public sealed record GeneratorProject(
     DateTimeOffset UpdatedAt,
     GeneratedBook Book)
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 }
 
 public sealed record ProjectSummary(Guid Id, string Name, DateTimeOffset UpdatedAt, int WorksheetCount);

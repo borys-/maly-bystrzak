@@ -5,8 +5,12 @@ namespace MalyBystrzak.Modules.Sudoku;
 
 public sealed class SudokuModule : IWorksheetModule
 {
+    private static readonly WorksheetInstruction ModuleInstruction = new("Sudoku",
+        "W każdym wierszu, kolumnie i oznaczonym bloku", "każda cyfra może wystąpić tylko raz.", "#88ccf1");
     public string Id => "sudoku";
     public string DisplayName => "Sudoku";
+    public string Symbol => "#";
+    public WorksheetInstruction Instruction => ModuleInstruction;
     public IReadOnlyList<WorksheetVariant> Variants { get; } =
     [new("4x4", "Sudoku 4 × 4", "Plansze z blokami 2 × 2"), new("6x6", "Sudoku 6 × 6", "Plansze z blokami 2 × 3")];
 
@@ -39,7 +43,7 @@ public sealed class SudokuModule : IWorksheetModule
     {
         var metrics = puzzle.CognitiveDifficulty;
         return new(puzzle.Number, "sudoku", $"{puzzle.Size}x{puzzle.Size}", $"Sudoku {puzzle.Size}x{puzzle.Size}",
-            Fingerprint(puzzle.Cells), metrics, metrics.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true));
+            Fingerprint(puzzle.Cells), metrics, metrics.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true), ModuleInstruction);
     }
 
     private static WorksheetVisual CreateVisual(SudokuPuzzle puzzle, bool solution)

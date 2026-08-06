@@ -14,24 +14,35 @@ public sealed record GenerationProgress(int Completed, int Total, string Message
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(VisualLine), "line")]
 [JsonDerivedType(typeof(VisualRectangle), "rectangle")]
+[JsonDerivedType(typeof(VisualEllipse), "ellipse")]
+[JsonDerivedType(typeof(VisualPolygon), "polygon")]
 [JsonDerivedType(typeof(VisualText), "text")]
 public abstract record VisualElement;
 
 public sealed record VisualLine(double X1, double Y1, double X2, double Y2, double Width, string Color) : VisualElement;
 public sealed record VisualRectangle(double X, double Y, double Width, double Height, string Fill,
     string Stroke, double StrokeWidth = 0) : VisualElement;
+public sealed record VisualEllipse(double CenterX, double CenterY, double RadiusX, double RadiusY,
+    string Fill, string Stroke, double StrokeWidth = 0) : VisualElement;
+public sealed record VisualPoint(double X, double Y);
+public sealed record VisualPolygon(IReadOnlyList<VisualPoint> Points, string Fill,
+    string Stroke, double StrokeWidth = 0) : VisualElement;
 public sealed record VisualText(double X, double Y, string Text, double Size, string Color,
     bool Bold = false, string Anchor = "middle") : VisualElement;
 public sealed record WorksheetVisual(double Width, double Height, IReadOnlyList<VisualElement> Elements);
+public sealed record WorksheetInstruction(string Title, string FirstLine, string SecondLine, string Accent);
 
 public sealed record GeneratedWorksheet(
     int Number, string ModuleId, string VariantId, string TypeName, string Fingerprint,
-    CognitiveDifficulty Difficulty, int DisplayStars, WorksheetVisual Task, WorksheetVisual Solution);
+    CognitiveDifficulty Difficulty, int DisplayStars, WorksheetVisual Task, WorksheetVisual Solution,
+    WorksheetInstruction Instruction);
 
 public interface IWorksheetModule
 {
     string Id { get; }
     string DisplayName { get; }
+    string Symbol { get; }
+    WorksheetInstruction Instruction { get; }
     IReadOnlyList<WorksheetVariant> Variants { get; }
     IReadOnlyList<string> Validate(ModuleGenerationRequest request);
     IReadOnlyList<GeneratedWorksheet> Generate(ModuleGenerationRequest request,

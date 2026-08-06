@@ -11,6 +11,14 @@
                 <line x1="@F(line.X1)" y1="@F(line.Y1)" x2="@F(line.X2)" y2="@F(line.Y2)"
                       stroke="@line.Color" stroke-width="@F(line.Width)" />
                 break;
+            case VisualEllipse ellipse:
+                <ellipse cx="@F(ellipse.CenterX)" cy="@F(ellipse.CenterY)" rx="@F(ellipse.RadiusX)" ry="@F(ellipse.RadiusY)"
+                         fill="@ellipse.Fill" stroke="@ellipse.Stroke" stroke-width="@F(ellipse.StrokeWidth)" />
+                break;
+            case VisualPolygon polygon:
+                <polygon points="@Points(polygon.Points)" fill="@polygon.Fill" stroke="@polygon.Stroke"
+                         stroke-width="@F(polygon.StrokeWidth)" />
+                break;
             case VisualText visualText:
                 <svg:text x="@F(visualText.X)" y="@F(visualText.Y)" font-size="@F(visualText.Size)" fill="@visualText.Color"
                           font-weight="@(visualText.Bold ? "700" : "400")" text-anchor="@visualText.Anchor">@visualText.Text</svg:text>
@@ -23,4 +31,5 @@
     [Parameter, EditorRequired] public WorksheetVisual Visual { get; set; } = default!;
     [Parameter] public string Label { get; set; } = "Podgląd zadania";
     private static string F(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+    private static string Points(IEnumerable<VisualPoint> points) => string.Join(' ', points.Select(point => $"{F(point.X)},{F(point.Y)}"));
 }
