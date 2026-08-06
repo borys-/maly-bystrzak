@@ -1,30 +1,37 @@
 using System.Text.Json;
 using MalyBystrzak.Core;
 using MalyBystrzak.Modules.Kakuro;
+using MalyBystrzak.Modules.Mazes;
+using MalyBystrzak.Modules.Nonograms;
 using MalyBystrzak.Modules.Sudoku;
 
 namespace MalyBystrzak.Tests;
 
 public class BookGeneratorTests
 {
-    private static readonly ModuleSelection[] AllTypes =
+    private static readonly ModuleSelection[] LegacyTypes =
     [new("sudoku", "4x4"), new("sudoku", "6x6"), new("kakuro", "3x3"), new("kakuro", "4x4")];
+    private static readonly ModuleSelection[] AllTypes =
+    [.. LegacyTypes, new("maze", "9x9"), new("maze", "15x15"), new("nonogram", "5x5"),
+        new("nonogram", "7x7"), new("nonogram", "10x10")];
 
     [Fact]
     public void RegistryProvidesIndependentModules()
     {
         var registry = Registry();
-        Assert.Equal(2, registry.All.Count);
+        Assert.Equal(4, registry.All.Count);
         Assert.Equal(2, registry.GetRequired("sudoku").Variants.Count);
         Assert.Equal(2, registry.GetRequired("kakuro").Variants.Count);
+        Assert.Equal(2, registry.GetRequired("maze").Variants.Count);
+        Assert.Equal(3, registry.GetRequired("nonogram").Variants.Count);
     }
 
     [Fact]
     public void MixedBookCyclesThroughSelectedTypesAndKeepsGlobalNumbering()
     {
-        var book = Generate(60, 112233, AllTypes);
-        Assert.Equal(Enumerable.Range(1, 60), book.Worksheets.Select(item => item.Number));
-        Assert.All(AllTypes, selection => Assert.Equal(15, book.Worksheets.Count(item =>
+        var book = Generate(45, 112233, AllTypes);
+        Assert.Equal(Enumerable.Range(1, 45), book.Worksheets.Select(item => item.Number));
+        Assert.All(AllTypes, selection => Assert.Equal(5, book.Worksheets.Count(item =>
             item.ModuleId == selection.ModuleId && item.VariantId == selection.VariantId)));
         for (var index = 0; index < book.Worksheets.Count; index++)
             Assert.Equal(AllTypes[index % AllTypes.Length].VariantId, book.Worksheets[index].VariantId);
@@ -34,8 +41,8 @@ public class BookGeneratorTests
     public void CliAndWebCompositionProduceSameMixedBookForSameSeed()
     {
         var settings = Settings(18, 445566, AllTypes);
-        var cliGenerator = new BookGenerator(new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule()]));
-        var webGenerator = new BookGenerator(new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule()]));
+        var cliGenerator = new BookGenerator(Registry());
+        var webGenerator = new BookGenerator(Registry());
 
         var cliBook = cliGenerator.Generate(settings);
         var webBook = webGenerator.Generate(settings);
@@ -48,7 +55,7 @@ public class BookGeneratorTests
     [Fact]
     public void PersonalizedBookHonorsRangeAndCreatesEqualRelativeStarGroups()
     {
-        var settings = Settings(30, 998877, AllTypes) with { ScoreMinimum = 20, ScoreMaximum = 80, RelativeStars = true };
+        var settings = Settings(30, 998877, LegacyTypes) with { ScoreMinimum = 20, ScoreMaximum = 80, RelativeStars = true };
         var book = new BookGenerator(Registry()).Generate(settings);
         Assert.All(book.Worksheets, item => Assert.InRange(item.Difficulty.Score, 20, 80));
         Assert.Equal(book.Worksheets.Select(item => item.Difficulty.Score).Order(), book.Worksheets.Select(item => item.Difficulty.Score));
@@ -92,7 +99,8 @@ public class BookGeneratorTests
         new BookGenerator(Registry()).Generate(Settings(count, seed, selections));
     private static BookGenerationSettings Settings(int count, int seed, IReadOnlyList<ModuleSelection> selections) =>
         new("Test", "Zadania", null, count, seed, selections, IncludeSolutions: true);
-    private static WorksheetModuleRegistry Registry() => new([new SudokuModule(), new KakuroModule()]);
+    private static WorksheetModuleRegistry Registry() => new(
+        [new SudokuModule(), new KakuroModule(), new MazeModule(), new NonogramModule()]);
 
     private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
     {
