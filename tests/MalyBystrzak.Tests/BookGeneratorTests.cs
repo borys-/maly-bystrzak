@@ -58,6 +58,20 @@ public class BookGeneratorTests
     }
 
     [Fact]
+    public void ProgressReportsCompletedWorksheetCount()
+    {
+        var reports = new List<GenerationProgress>();
+        var progress = new InlineProgress<GenerationProgress>(reports.Add);
+
+        new BookGenerator(Registry()).Generate(Settings(12, 2468, AllTypes), progress);
+
+        Assert.NotEmpty(reports);
+        Assert.Equal(12, reports[^1].Completed);
+        Assert.All(reports, report => Assert.Equal(12, report.Total));
+        Assert.Equal(reports.Select(report => report.Completed).Order(), reports.Select(report => report.Completed));
+    }
+
+    [Fact]
     public void ProjectRoundTripsWithPolymorphicVisuals()
     {
         var book = Generate(4, 123, [new("sudoku", "4x4")]);
@@ -72,4 +86,9 @@ public class BookGeneratorTests
     private static BookGenerationSettings Settings(int count, int seed, IReadOnlyList<ModuleSelection> selections) =>
         new("Test", "Zadania", null, count, seed, selections, IncludeSolutions: true);
     private static WorksheetModuleRegistry Registry() => new([new SudokuModule(), new KakuroModule()]);
+
+    private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
+    }
 }
