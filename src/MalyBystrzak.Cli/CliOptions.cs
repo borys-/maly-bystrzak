@@ -48,7 +48,7 @@ internal sealed record CliOptions(
           --size <liczba>         Sudoku: 4 lub 6; Kakuro: 3 lub 4
           --title <tekst>         Tytuł okładki
           --subtitle <tekst>      Podtytuł okładki
-          --child-name <tekst>    Imię dziecka; bez opcji zostaje linia do wpisania
+          --child-name <tekst>    Imię dziecka wyświetlane na okładce
           --seed <liczba>         Ziarno generatora do odtworzenia zestawu
           --types <lista>         Typy dla mixed, np. sudoku4,sudoku6,kakuro
           --score-min <0-100>     Minimalny wskaźnik dla mixed

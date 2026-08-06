@@ -92,9 +92,9 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         DrawCentered(graphics, settings.Subtitle, 14, true, "#25316d", page.X + 34, page.Y + 150, page.Width - 68, 34);
         DrawCentered(graphics, "Sudoku • Kakuro • zadania logiczne", 15, true, "#25316d",
             page.X + 34, page.Y + 270, page.Width - 68, 34);
-        DrawCentered(graphics, string.IsNullOrWhiteSpace(settings.ChildName) ? "IMIĘ: ____________________" : settings.ChildName!,
-            string.IsNullOrWhiteSpace(settings.ChildName) ? 13 : 27, true, "#25316d",
-            page.X + 45, page.Y + 350, page.Width - 90, 48);
+        if (!string.IsNullOrWhiteSpace(settings.ChildName))
+            DrawCentered(graphics, settings.ChildName!, 27, true, "#25316d",
+                page.X + 45, page.Y + 350, page.Width - 90, 48);
         var stripeY = page.Bottom - 76;
         var stripeWidth = (page.Width - 100) / 3;
         graphics.DrawRectangle(Brush("#8edbc4"), page.X + 38, stripeY, stripeWidth, 16);
@@ -174,13 +174,42 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
     private static void DrawBackCover(XGraphics graphics, XRect page, BookGenerationSettings settings)
     {
         graphics.DrawRectangle(new XPen(Color("#25316d"), 3), Inset(page, 18));
-        DrawCentered(graphics, "Brawo!", 30, true, "#f15a8a", page.X + 35, page.Y + 185, page.Width - 70, 48);
+        DrawCentered(graphics, "Brawo!", 30, true, "#f15a8a", page.X + 35, page.Y + 66, page.Width - 70, 48);
         DrawCentered(graphics, "Każde rozwiązane zadanie ćwiczy", 12, false, "#25316d",
-            page.X + 48, page.Y + 245, page.Width - 96, 24);
+            page.X + 48, page.Y + 119, page.Width - 96, 24);
         DrawCentered(graphics, "spostrzegawczość i logiczne myślenie.", 12, false, "#25316d",
-            page.X + 48, page.Y + 271, page.Width - 96, 24);
+            page.X + 48, page.Y + 143, page.Width - 96, 24);
+
+        DrawCentered(graphics, "Jak rozwiązywać zagadki?", 15, true, "#25316d",
+            page.X + 42, page.Y + 188, page.Width - 84, 28);
+        var ruleY = page.Y + 225;
+        if (settings.Selections.Any(selection => selection.ModuleId == "sudoku"))
+        {
+            DrawRuleCard(graphics, page, ruleY, "Sudoku",
+                "W każdym wierszu, kolumnie i oznaczonym bloku", "każda cyfra może wystąpić tylko raz.", "#88ccf1");
+            ruleY += 82;
+        }
+        if (settings.Selections.Any(selection => selection.ModuleId == "kakuro"))
+            DrawRuleCard(graphics, page, ruleY, "Kakuro",
+                "Wpisz cyfry 1-9, aby otrzymać podane sumy.", "W jednej grupie cyfry nie mogą się powtarzać.", "#8edbc4");
+
+        DrawCentered(graphics, "Stwórz kolejną książeczkę:", 9, true, "#25316d",
+            page.X + 35, page.Bottom - 105, page.Width - 70, 18);
+        DrawCentered(graphics, "https://borys-.github.io/maly-bystrzak/", 9, true, "#f15a8a",
+            page.X + 35, page.Bottom - 84, page.Width - 70, 18);
         DrawCentered(graphics, $"Wygenerowano z ziarnem: {settings.Seed}", 7, false, "#6b7280",
             page.X + 35, page.Bottom - 56, page.Width - 70, 20);
+    }
+
+    private static void DrawRuleCard(XGraphics graphics, XRect page, double y, string title,
+        string firstLine, string secondLine, string accent)
+    {
+        var card = new XRect(page.X + 42, y, page.Width - 84, 70);
+        graphics.DrawRoundedRectangle(new XPen(Color(accent), 1.2), card, new XSize(5, 5));
+        graphics.DrawRectangle(Brush(accent), card.X, card.Y, 7, card.Height);
+        graphics.DrawString(title, Font(10, true), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 21));
+        graphics.DrawString(firstLine, Font(7.5), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 40));
+        graphics.DrawString(secondLine, Font(7.5), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 54));
     }
 
     private static void DrawCentered(XGraphics graphics, string value, double size, bool bold, string color,
