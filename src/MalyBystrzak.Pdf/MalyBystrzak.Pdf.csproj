@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\MalyBystrzak.Core\MalyBystrzak.Core.csproj" />
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts\Lato-Regular.ttf" />
+    <EmbeddedResource Include="Fonts\Lato-Bold.ttf" />
+    <None Include="Fonts\OFL.txt" Pack="true" PackagePath="licenses" />
+  </ItemGroup>
+</Project>

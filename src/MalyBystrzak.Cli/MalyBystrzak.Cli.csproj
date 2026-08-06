@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>maly-bystrzak</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MalyBystrzak.Core\MalyBystrzak.Core.csproj" />
+    <ProjectReference Include="..\MalyBystrzak.Modules.Sudoku\MalyBystrzak.Modules.Sudoku.csproj" />
+    <ProjectReference Include="..\MalyBystrzak.Modules.Kakuro\MalyBystrzak.Modules.Kakuro.csproj" />
+    <ProjectReference Include="..\MalyBystrzak.Pdf\MalyBystrzak.Pdf.csproj" />
+  </ItemGroup>
+</Project>
+

@@ -1,0 +1,281 @@
+@page "/"
+@using System.Security.Cryptography
+@using System.Text.Json
+@using MalyBystrzak.Web.Components
+@inject BookGenerator Generator
+@inject WorksheetModuleRegistry Registry
+@inject IBookPdfRenderer PdfRenderer
+@inject IProjectStore ProjectStore
+@inject IJSRuntime JS
+
+<PageTitle>Mały Bystrzak — generator książeczek dla dzieci</PageTitle>
+
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">NAUKA, KTÓRA TRAFIA NA PAPIER</span>
+        <h1>Ułóż wyjątkową książeczkę<br /><em>dla małego bystrzaka.</em></h1>
+        <p>Wybierz zadania, dopasuj poziom i pobierz gotowy PDF. Bez konta, bez wysyłania danych — także offline.</p>
+        <div class="hero-pills" aria-label="Najważniejsze możliwości">
+            <span>Sudoku 4×4 i 6×6</span><span>Kakuro 3×3 i 4×4</span><span>Gotowa broszura A4</span>
+        </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+        <div class="paper-card paper-back"></div>
+        <div class="paper-card paper-front">
+            <span>MAŁY</span><strong>BYSTRZAK</strong>
+            <div class="mini-grid">@foreach (var n in new[] { "1", "", "", "4", "", "4", "1", "", "", "1", "4", "", "4", "", "", "1" }) { <i>@n</i> }</div>
+        </div>
+        <i class="shape shape-one"></i><i class="shape shape-two"></i><i class="shape shape-three"></i>
+    </div>
+</section>
+
+<section class="builder-section" id="generator">
+    <div class="section-heading">
+        <div><span class="step-label">KROK PO KROKU</span><h2>Zaprojektuj książeczkę</h2></div>
+        <p>Wszystkie ustawienia możesz później zapisać na tym urządzeniu.</p>
+    </div>
+
+    <div class="builder-grid">
+        <form class="config-card" @onsubmit="GenerateAsync" @onsubmit:preventDefault>
+            <fieldset>
+                <legend><b>1</b> Wybierz rodzaje zadań</legend>
+                <div class="variant-grid">
+                    @foreach (var choice in choices)
+                    {
+                        <label class="variant-option @(choice.Selected ? "selected" : null)">
+                            <input type="checkbox" @bind="choice.Selected" />
+                            <span class="variant-icon">@(choice.ModuleId == "sudoku" ? "#" : "+")</span>
+                            <span><strong>@choice.Name</strong><small>@choice.Description</small></span>
+                            <i aria-hidden="true">✓</i>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend><b>2</b> Dopasuj książeczkę</legend>
+                <div class="form-grid">
+                    <label><span>Tytuł</span><input maxlength="70" @bind="title" /></label>
+                    <label><span>Imię dziecka <small>(opcjonalnie)</small></span><input maxlength="40" @bind="childName" placeholder="np. Zosia" /></label>
+                    <label class="wide"><span>Podtytuł</span><input maxlength="100" @bind="subtitle" /></label>
+                    <label><span>Liczba zadań</span><input type="number" min="1" max="180" @bind="count" /></label>
+                    <label><span>Ziarno zestawu</span><span class="input-action"><input type="number" @bind="seed" /><button type="button" @onclick="RandomizeSeed" title="Wylosuj ziarno">↻</button></span></label>
+                </div>
+                <label class="toggle-row"><input type="checkbox" @bind="personalized" /><span><strong>Personalizuj zakres trudności</strong><small>Dobierz zadania według wyniku 0–100 i nadaj względne poziomy.</small></span></label>
+                @if (personalized)
+                {
+                    <div class="range-row">
+                        <label><span>Od</span><input type="number" min="0" max="99" @bind="scoreMin" /></label>
+                        <span>—</span>
+                        <label><span>Do</span><input type="number" min="1" max="100" @bind="scoreMax" /></label>
+                    </div>
+                }
+                <label class="toggle-row"><input type="checkbox" @bind="includeSolutions" /><span><strong>Dołącz rozwiązania</strong><small>Odpowiedzi znajdą się w osobnej sekcji na końcu.</small></span></label>
+            </fieldset>
+
+            @if (!string.IsNullOrWhiteSpace(error)) { <div class="alert error" role="alert">@error</div> }
+            @if (isGenerating)
+            {
+                <div class="progress-box" aria-live="polite">
+                    <div><span>@progressMessage</span><strong>@progressPercent%</strong></div>
+                    <progress max="100" value="@progressPercent"></progress>
+                    <button type="button" class="text-button" @onclick="CancelGeneration">Anuluj generowanie</button>
+                </div>
+            }
+            else
+            {
+                <button class="primary-button" type="submit"><span>Wygeneruj książeczkę</span><b>→</b></button>
+            }
+        </form>
+
+        <aside class="result-card">
+            @if (book is null)
+            {
+                <div class="empty-result">
+                    <div class="empty-icon">✦</div>
+                    <h3>Tu pojawi się Twoja książeczka</h3>
+                    <p>Wybierz ustawienia i rozpocznij generowanie. Zobaczysz pierwsze zadania jeszcze przed pobraniem.</p>
+                </div>
+            }
+            else
+            {
+                <div class="result-heading">
+                    <div><span>GOTOWE DO DRUKU</span><h3>@book.Settings.Title</h3></div>
+                    <span class="success-chip">✓ @book.Worksheets.Count zadań</span>
+                </div>
+                <div class="preview-grid">
+                    @foreach (var item in book.Worksheets.Take(6))
+                    {
+                        <article class="preview-card">
+                            <header><strong>Nr @item.Number</strong><span>@item.TypeName</span></header>
+                            <WorksheetPreview Visual="item.Task" Label="@($"Zadanie {item.Number} — {item.TypeName}")" />
+                            <footer><span class="difficulty-dots">@Dots(item.DisplayStars)</span><small>@item.Difficulty.Score/100</small></footer>
+                        </article>
+                    }
+                </div>
+                @if (book.Worksheets.Count > 6) { <p class="more-note">+ @(book.Worksheets.Count - 6) kolejnych zadań w gotowym dokumencie</p> }
+                <div class="download-stack">
+                    <button class="primary-button" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
+                    <div class="secondary-actions">
+                        <button @onclick="DownloadPreviewAsync">Podgląd A5</button>
+                        <button @onclick="DownloadCsvAsync">Raport CSV</button>
+                    </div>
+                </div>
+                <div class="save-project">
+                    <input aria-label="Nazwa projektu" maxlength="60" @bind="projectName" />
+                    <button @onclick="SaveProjectAsync">Zapisz projekt</button>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(message)) { <div class="alert success" role="status">@message</div> }
+            }
+        </aside>
+    </div>
+</section>
+
+<section class="projects-section" id="projekty">
+    <div class="section-heading">
+        <div><span class="step-label">NA TYM URZĄDZENIU</span><h2>Zapisane projekty</h2></div>
+        <p>Dane pozostają wyłącznie w tej przeglądarce.</p>
+    </div>
+    @if (projects.Count == 0)
+    {
+        <div class="projects-empty">Nie masz jeszcze zapisanych projektów.</div>
+    }
+    else
+    {
+        <div class="project-list">
+            @foreach (var project in projects)
+            {
+                <article>
+                    <div class="project-badge">@project.WorksheetCount</div>
+                    <div><strong>@project.Name</strong><small>@project.UpdatedAt.LocalDateTime.ToString("dd.MM.yyyy, HH:mm") · @project.WorksheetCount zadań</small></div>
+                    <button @onclick="() => LoadProjectAsync(project.Id)">Otwórz</button>
+                    <button class="delete-button" title="Usuń projekt" @onclick="() => DeleteProjectAsync(project.Id)">×</button>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private readonly List<VariantChoice> choices = [];
+    private IReadOnlyList<ProjectSummary> projects = [];
+    private GeneratedBook? book;
+    private string title = "Moja książeczka zadań";
+    private string subtitle = "Łamigłówki dla małych bystrzaków";
+    private string? childName;
+    private string projectName = "Moja książeczka";
+    private int count = 24;
+    private int seed = 12345;
+    private bool personalized;
+    private int scoreMin = 20;
+    private int scoreMax = 80;
+    private bool includeSolutions = true;
+    private bool isGenerating;
+    private bool isExporting;
+    private int progressPercent;
+    private string progressMessage = "Przygotowuję zadania…";
+    private string? error;
+    private string? message;
+    private CancellationTokenSource? cancellation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        foreach (var module in Registry.All)
+        foreach (var variant in module.Variants)
+            choices.Add(new(module.Id, variant.Id, variant.DisplayName, variant.Description,
+                module.Id == "sudoku" && variant.Id == "4x4"));
+        await RefreshProjectsAsync();
+    }
+
+    private async Task GenerateAsync()
+    {
+        error = message = null;
+        var selections = choices.Where(choice => choice.Selected).Select(choice => new ModuleSelection(choice.ModuleId, choice.VariantId)).ToArray();
+        if (selections.Length == 0) { error = "Wybierz co najmniej jeden rodzaj zadania."; return; }
+        if (count is < 1 or > 180) { error = "Liczba zadań musi mieścić się w zakresie 1–180."; return; }
+        isGenerating = true;
+        progressPercent = 0;
+        cancellation = new CancellationTokenSource();
+        await InvokeAsync(StateHasChanged);
+        await Task.Yield();
+        try
+        {
+            var settings = new BookGenerationSettings(title.Trim(), subtitle.Trim(), string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(),
+                count, seed, selections, personalized ? scoreMin : null, personalized ? scoreMax : null, personalized, includeSolutions);
+            var progress = new Progress<GenerationProgress>(value =>
+            {
+                progressPercent = value.Percentage;
+                progressMessage = value.Message;
+                _ = InvokeAsync(StateHasChanged);
+            });
+            book = Generator.Generate(settings, progress, cancellation.Token);
+            projectName = string.IsNullOrWhiteSpace(childName) ? title : $"{title} — {childName}";
+            await JS.InvokeVoidAsync("malyBystrzak.setPreference", "last-settings", JsonSerializer.Serialize(settings));
+        }
+        catch (OperationCanceledException) { error = "Generowanie zostało anulowane."; }
+        catch (Exception exception) { error = exception.Message; }
+        finally { isGenerating = false; cancellation.Dispose(); cancellation = null; }
+    }
+
+    private void CancelGeneration() => cancellation?.Cancel();
+    private void RandomizeSeed() => seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
+
+    private async Task DownloadBookletAsync() => await DownloadPdfAsync("maly-bystrzak-broszura-a4.pdf", true);
+    private async Task DownloadPreviewAsync() => await DownloadPdfAsync("maly-bystrzak-podglad-a5.pdf", false);
+    private async Task DownloadPdfAsync(string name, bool booklet)
+    {
+        if (book is null) return;
+        isExporting = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Yield();
+        try
+        {
+            var document = book.CreateDocument();
+            var bytes = booklet ? PdfRenderer.RenderBooklet(document) : PdfRenderer.RenderPreview(document);
+            await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", name, "application/pdf", bytes);
+        }
+        catch (Exception exception) { error = $"Nie udało się utworzyć PDF: {exception.Message}"; }
+        finally { isExporting = false; }
+    }
+
+    private async Task DownloadCsvAsync()
+    {
+        if (book is null) return;
+        await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", DifficultyReport.FileName, "text/csv", DifficultyReport.Create(book.Worksheets));
+    }
+
+    private async Task SaveProjectAsync()
+    {
+        if (book is null || string.IsNullOrWhiteSpace(projectName)) return;
+        await ProjectStore.SaveAsync(new(GeneratorProject.CurrentSchemaVersion, Guid.NewGuid(), projectName.Trim(), DateTimeOffset.UtcNow, book));
+        message = "Projekt został zapisany na tym urządzeniu.";
+        await RefreshProjectsAsync();
+    }
+
+    private async Task LoadProjectAsync(Guid id)
+    {
+        var project = await ProjectStore.GetAsync(id);
+        if (project is null) { error = "Nie udało się odczytać projektu."; return; }
+        book = project.Book;
+        title = book.Settings.Title; subtitle = book.Settings.Subtitle; childName = book.Settings.ChildName;
+        count = book.Settings.Count; seed = book.Settings.Seed; personalized = book.Settings.RelativeStars;
+        scoreMin = book.Settings.ScoreMinimum ?? 20; scoreMax = book.Settings.ScoreMaximum ?? 80;
+        includeSolutions = book.Settings.IncludeSolutions; projectName = project.Name;
+        foreach (var choice in choices) choice.Selected = book.Settings.Selections.Contains(new(choice.ModuleId, choice.VariantId));
+        message = "Projekt został otwarty.";
+        await JS.InvokeVoidAsync("scrollTo", new { top = 520, behavior = "smooth" });
+    }
+
+    private async Task DeleteProjectAsync(Guid id) { await ProjectStore.DeleteAsync(id); await RefreshProjectsAsync(); }
+    private async Task RefreshProjectsAsync() => projects = await ProjectStore.ListAsync();
+    private static string Dots(int count) => new('●', count);
+
+    private sealed class VariantChoice(string moduleId, string variantId, string name, string description, bool selected)
+    {
+        public string ModuleId { get; } = moduleId;
+        public string VariantId { get; } = variantId;
+        public string Name { get; } = name;
+        public string Description { get; } = description;
+        public bool Selected { get; set; } = selected;
+    }
+}

@@ -1,0 +1,26 @@
+<svg class="worksheet-svg" viewBox="0 0 @Visual.Width @Visual.Height" role="img" aria-label="@Label">
+    @foreach (var element in Visual.Elements)
+    {
+        switch (element)
+        {
+            case VisualRectangle rectangle:
+                <rect x="@F(rectangle.X)" y="@F(rectangle.Y)" width="@F(rectangle.Width)" height="@F(rectangle.Height)"
+                      fill="@rectangle.Fill" stroke="@rectangle.Stroke" stroke-width="@F(rectangle.StrokeWidth)" />
+                break;
+            case VisualLine line:
+                <line x1="@F(line.X1)" y1="@F(line.Y1)" x2="@F(line.X2)" y2="@F(line.Y2)"
+                      stroke="@line.Color" stroke-width="@F(line.Width)" />
+                break;
+            case VisualText visualText:
+                <text><tspan x="@F(visualText.X)" y="@F(visualText.Y)" font-size="@F(visualText.Size)" fill="@visualText.Color"
+                      font-weight="@(visualText.Bold ? "700" : "400")" text-anchor="@visualText.Anchor">@visualText.Text</tspan></text>
+                break;
+        }
+    }
+</svg>
+
+@code {
+    [Parameter, EditorRequired] public WorksheetVisual Visual { get; set; } = default!;
+    [Parameter] public string Label { get; set; } = "Podgląd zadania";
+    private static string F(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}
