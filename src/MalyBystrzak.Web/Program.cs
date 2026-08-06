@@ -4,6 +4,7 @@ using MalyBystrzak.Web;
 using MalyBystrzak.Core;
 using MalyBystrzak.Modules.Kakuro;
 using MalyBystrzak.Modules.Mazes;
+using MalyBystrzak.Modules.Sequences;
 using MalyBystrzak.Modules.Sudoku;
 using MalyBystrzak.Pdf;
 using MalyBystrzak.Web.Services;
@@ -16,6 +17,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddSingleton<IWorksheetModule, SudokuModule>();
 builder.Services.AddSingleton<IWorksheetModule, KakuroModule>();
 builder.Services.AddSingleton<IWorksheetModule, MazeModule>();
+builder.Services.AddSingleton<IWorksheetModule, SequenceModule>();
 builder.Services.AddSingleton(sp => new WorksheetModuleRegistry(sp.GetServices<IWorksheetModule>()));
 builder.Services.AddSingleton<BookGenerator>();
 builder.Services.AddSingleton<IBookPdfRenderer, BookPdfRenderer>();
