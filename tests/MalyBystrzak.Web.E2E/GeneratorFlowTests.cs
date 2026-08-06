@@ -14,6 +14,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ułóż wyjątkową książeczkę dla małego bystrzaka." })).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
+        await Expect(Page.GetByLabel("Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.")).Not.ToBeCheckedAsync();
     }
 
     [Fact]
