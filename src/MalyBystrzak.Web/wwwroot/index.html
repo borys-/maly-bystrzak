@@ -18,17 +18,20 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="app-loading" role="status" aria-live="polite">
+            <div class="loading-card">
+                <span class="loading-mark" aria-hidden="true">MB</span>
+                <strong>Mały Bystrzak</strong>
+                <p>Przygotowuję generator książeczek</p>
+                <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+        Wystąpił nieoczekiwany błąd.
+        <a href="" class="reload">Odśwież stronę</a>
+        <a class="dismiss">×</a>
     </div>
     <script src="app.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
