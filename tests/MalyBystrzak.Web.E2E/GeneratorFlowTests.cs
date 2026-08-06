@@ -12,6 +12,9 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.GotoAsync(server.BaseUrl);
         await Expect(Page).ToHaveTitleAsync("Mały Bystrzak — generator książeczek dla dzieci");
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ułóż wyjątkową książeczkę dla małego bystrzaka." })).ToBeVisibleAsync();
+        var focusedHeadingOutline = await Page.EvaluateAsync<string>(
+            "() => document.activeElement?.tagName === 'H1' ? getComputedStyle(document.activeElement).outlineStyle : 'unexpected-focus'");
+        Assert.Equal("none", focusedHeadingOutline);
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
         await Expect(Page.GetByLabel("Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.")).Not.ToBeCheckedAsync();
