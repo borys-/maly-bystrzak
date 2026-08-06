@@ -42,7 +42,7 @@
                 <div class="variant-grid">
                     @foreach (var choice in choices)
                     {
-                        <label class="variant-option @(choice.Selected ? "selected" : null)">
+                        <label class="variant-option @(choice.Selected ? "selected" : null)" data-testid="@($"variant-{choice.ModuleId}-{choice.VariantId}")">
                             <input type="checkbox" @bind="choice.Selected" />
                             <span class="variant-icon">@(choice.ModuleId == "sudoku" ? "#" : "+")</span>
                             <span><strong>@choice.Name</strong><small>@choice.Description</small></span>
@@ -84,11 +84,11 @@
             }
             else
             {
-                <button class="primary-button" type="submit"><span>Wygeneruj książeczkę</span><b>→</b></button>
+                <button class="primary-button" type="submit" data-testid="generate"><span>Wygeneruj książeczkę</span><b>→</b></button>
             }
         </form>
 
-        <aside class="result-card">
+        <aside class="result-card" data-testid="@(book is null ? "empty-result" : "result")">
             @if (book is null)
             {
                 <div class="empty-result">
@@ -115,7 +115,7 @@
                 </div>
                 @if (book.Worksheets.Count > 6) { <p class="more-note">+ @(book.Worksheets.Count - 6) kolejnych zadań w gotowym dokumencie</p> }
                 <div class="download-stack">
-                    <button class="primary-button" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
+                    <button class="primary-button" data-testid="download-booklet" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
                     <div class="secondary-actions">
                         <button @onclick="DownloadPreviewAsync">Podgląd A5</button>
                         <button @onclick="DownloadCsvAsync">Raport CSV</button>
@@ -123,7 +123,7 @@
                 </div>
                 <div class="save-project">
                     <input aria-label="Nazwa projektu" maxlength="60" @bind="projectName" />
-                    <button @onclick="SaveProjectAsync">Zapisz projekt</button>
+                    <button data-testid="save-project" @onclick="SaveProjectAsync">Zapisz projekt</button>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(message)) { <div class="alert success" role="status">@message</div> }
             }
