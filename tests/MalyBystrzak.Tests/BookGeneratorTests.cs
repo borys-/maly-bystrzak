@@ -82,7 +82,7 @@ public class BookGeneratorTests
     public void ProjectRoundTripsWithPolymorphicVisuals()
     {
         var book = Generate(4, 123, [new("sudoku", "4x4")]);
-        var project = new GeneratorProject(1, Guid.NewGuid(), "Test", DateTimeOffset.UtcNow, book);
+        var project = new GeneratorProject(GeneratorProject.CurrentSchemaVersion, Guid.NewGuid(), "Test", DateTimeOffset.UtcNow, book);
         var restored = JsonSerializer.Deserialize<GeneratorProject>(JsonSerializer.Serialize(project));
         Assert.NotNull(restored);
         Assert.IsType<VisualRectangle>(restored!.Book.Worksheets[0].Task.Elements[0]);

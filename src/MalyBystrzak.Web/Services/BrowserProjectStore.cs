@@ -4,7 +4,7 @@ using Microsoft.JSInterop;
 
 namespace MalyBystrzak.Web.Services;
 
-public sealed class BrowserProjectStore(IJSRuntime js) : IProjectStore
+public sealed class BrowserProjectStore(IJSRuntime js, BookGenerator generator) : IProjectStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -20,18 +20,45 @@ public sealed class BrowserProjectStore(IJSRuntime js) : IProjectStore
         if (string.IsNullOrWhiteSpace(json)) return null;
         try
         {
-            var project = JsonSerializer.Deserialize<GeneratorProject>(json, JsonOptions);
-            return project?.SchemaVersion == GeneratorProject.CurrentSchemaVersion ? project : null;
+            using var document = JsonDocument.Parse(json);
+            if (!document.RootElement.TryGetProperty("schemaVersion", out var versionElement)) return null;
+            return versionElement.GetInt32() switch
+            {
+                GeneratorProject.CurrentSchemaVersion => RestoreCompactProject(json),
+                1 => RestoreLegacyProject(json),
+                _ => null
+            };
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or ArgumentException or InvalidOperationException)
         {
             return null;
         }
     }
 
-    public ValueTask SaveAsync(GeneratorProject project) => js.InvokeVoidAsync("malyBystrzakStore.save",
-        project.Id.ToString(), JsonSerializer.Serialize(project, JsonOptions), JsonSerializer.Serialize(
-            new ProjectSummary(project.Id, project.Name, project.UpdatedAt, project.Book.Worksheets.Count), JsonOptions));
+    public ValueTask SaveAsync(GeneratorProject project)
+    {
+        var stored = new StoredGeneratorProject(GeneratorProject.CurrentSchemaVersion, project.Id, project.Name,
+            project.UpdatedAt, project.Book.Settings);
+        return js.InvokeVoidAsync("malyBystrzakStore.save", project.Id.ToString(),
+            JsonSerializer.Serialize(stored, JsonOptions), JsonSerializer.Serialize(
+                new ProjectSummary(project.Id, project.Name, project.UpdatedAt, project.Book.Worksheets.Count), JsonOptions));
+    }
 
     public ValueTask DeleteAsync(Guid id) => js.InvokeVoidAsync("malyBystrzakStore.remove", id.ToString());
+
+    private GeneratorProject? RestoreCompactProject(string json)
+    {
+        var stored = JsonSerializer.Deserialize<StoredGeneratorProject>(json, JsonOptions);
+        return stored is null ? null : new(GeneratorProject.CurrentSchemaVersion, stored.Id, stored.Name,
+            stored.UpdatedAt, generator.Generate(stored.Settings));
+    }
+
+    private static GeneratorProject? RestoreLegacyProject(string json)
+    {
+        var project = JsonSerializer.Deserialize<GeneratorProject>(json, JsonOptions);
+        return project is null ? null : project with { SchemaVersion = GeneratorProject.CurrentSchemaVersion };
+    }
+
+    private sealed record StoredGeneratorProject(int SchemaVersion, Guid Id, string Name, DateTimeOffset UpdatedAt,
+        BookGenerationSettings Settings);
 }

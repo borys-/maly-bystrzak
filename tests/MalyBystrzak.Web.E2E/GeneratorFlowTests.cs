@@ -52,6 +52,22 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.GetByLabel("Nazwa projektu").FillAsync("Test Playwright");
         await Page.GetByTestId("save-project").ClickAsync();
         await Expect(Page.GetByText("Projekt został zapisany na tym urządzeniu.")).ToBeVisibleAsync();
+        var storedDocumentLength = await Page.EvaluateAsync<int>("""
+            async () => {
+              const db = await new Promise((resolve, reject) => {
+                const request = indexedDB.open('maly-bystrzak', 1);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              });
+              const request = db.transaction('projects', 'readonly').objectStore('projects').getAll();
+              const rows = await new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              });
+              return rows[0].document.length;
+            }
+            """);
+        Assert.InRange(storedDocumentLength, 1, 10_000);
         await Page.ReloadAsync();
         await Expect(Page.GetByText("Test Playwright")).ToBeVisibleAsync();
     }
