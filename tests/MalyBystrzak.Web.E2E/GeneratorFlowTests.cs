@@ -25,6 +25,13 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.GetByLabel("Liczba zadań").FillAsync("8");
         await Page.GetByTestId("generate").ClickAsync();
         await Expect(Page.GetByTestId("result")).ToContainTextAsync("8 zadań", new() { Timeout = 60_000 });
+        await Expect(Page.GetByTestId("preview-page-label")).ToHaveTextAsync("Strona 1 z 2");
+        await Expect(Page.GetByText("Nr 1", new() { Exact = true })).ToBeVisibleAsync();
+        await Page.GetByTestId("preview-next").ClickAsync();
+        await Expect(Page.GetByTestId("preview-page-label")).ToHaveTextAsync("Strona 2 z 2");
+        await Expect(Page.GetByText("Nr 7", new() { Exact = true })).ToBeVisibleAsync();
+        await Page.GetByTestId("preview-previous").ClickAsync();
+        await Expect(Page.GetByTestId("preview-page-label")).ToHaveTextAsync("Strona 1 z 2");
         var visibleGlyphs = await Page.Locator(".preview-card svg text").EvaluateAllAsync<int>(
             "elements => elements.filter(element => element.getBoundingClientRect().width > 0).length");
         Assert.True(visibleGlyphs > 0);

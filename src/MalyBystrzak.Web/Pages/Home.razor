@@ -103,17 +103,31 @@
                     <div><span>GOTOWE DO DRUKU</span><h3>@book.Settings.Title</h3></div>
                     <span class="success-chip">✓ @book.Worksheets.Count zadań</span>
                 </div>
+                <div class="preview-toolbar">
+                    <div class="preview-tabs" aria-label="Rodzaj podglądu">
+                        <button type="button" class="@(!showingSolutions ? "active" : null)" data-testid="preview-tasks" @onclick="() => showingSolutions = false">Zadania</button>
+                        @if (book.Settings.IncludeSolutions)
+                        {
+                            <button type="button" class="@(showingSolutions ? "active" : null)" data-testid="preview-solutions" @onclick="() => showingSolutions = true">Rozwiązania</button>
+                        }
+                    </div>
+                    <span data-testid="preview-page-label">Strona @(previewPage + 1) z @PreviewPageCount</span>
+                </div>
                 <div class="preview-grid">
-                    @foreach (var item in book.Worksheets.Take(6))
+                    @foreach (var item in PreviewItems)
                     {
                         <article class="preview-card">
                             <header><strong>Nr @item.Number</strong><span>@item.TypeName</span></header>
-                            <WorksheetPreview Visual="item.Task" Label="@($"Zadanie {item.Number} — {item.TypeName}")" />
+                            <WorksheetPreview Visual="@(showingSolutions ? item.Solution : item.Task)"
+                                              Label="@($"{(showingSolutions ? "Rozwiązanie" : "Zadanie")} {item.Number} — {item.TypeName}")" />
                             <footer><span class="difficulty-dots">@Dots(item.DisplayStars)</span><small>@item.Difficulty.Score/100</small></footer>
                         </article>
                     }
                 </div>
-                @if (book.Worksheets.Count > 6) { <p class="more-note">+ @(book.Worksheets.Count - 6) kolejnych zadań w gotowym dokumencie</p> }
+                <div class="preview-pagination">
+                    <button type="button" data-testid="preview-previous" disabled="@(previewPage == 0)" @onclick="PreviousPreviewPage">← Poprzednia</button>
+                    <button type="button" data-testid="preview-next" disabled="@(previewPage + 1 >= PreviewPageCount)" @onclick="NextPreviewPage">Następna →</button>
+                </div>
                 <div class="download-stack">
                     <button class="primary-button" data-testid="download-booklet" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
                     <div class="secondary-actions">
@@ -171,6 +185,8 @@
     private int scoreMin = 20;
     private int scoreMax = 80;
     private bool includeSolutions;
+    private bool showingSolutions;
+    private int previewPage;
     private bool isGenerating;
     private bool isExporting;
     private int progressPercent;
@@ -211,6 +227,8 @@
                 _ = InvokeAsync(StateHasChanged);
             });
             book = Generator.Generate(settings, progress, cancellation.Token);
+            previewPage = 0;
+            showingSolutions = false;
             projectName = string.IsNullOrWhiteSpace(childName) ? title : $"{title} — {childName}";
             await JS.InvokeVoidAsync("malyBystrzak.setPreference", "last-settings", JsonSerializer.Serialize(settings));
         }
@@ -221,6 +239,10 @@
 
     private void CancelGeneration() => cancellation?.Cancel();
     private void RandomizeSeed() => seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
+    private int PreviewPageCount => Math.Max(1, (book?.Worksheets.Count + 5 ?? 0) / 6);
+    private IEnumerable<GeneratedWorksheet> PreviewItems => book?.Worksheets.Skip(previewPage * 6).Take(6) ?? [];
+    private void PreviousPreviewPage() => previewPage = Math.Max(0, previewPage - 1);
+    private void NextPreviewPage() => previewPage = Math.Min(PreviewPageCount - 1, previewPage + 1);
 
     private async Task DownloadBookletAsync() => await DownloadPdfAsync("maly-bystrzak-broszura-a4.pdf", true);
     private async Task DownloadPreviewAsync() => await DownloadPdfAsync("maly-bystrzak-podglad-a5.pdf", false);
@@ -261,6 +283,7 @@
         var project = await ProjectStore.GetAsync(id);
         if (project is null) { error = "Nie udało się odczytać projektu."; return; }
         activeProjectId = project.Id; book = project.Book;
+        previewPage = 0; showingSolutions = false;
         ApplySettings(book.Settings);
         projectName = project.Name;
         message = "Projekt został otwarty.";
