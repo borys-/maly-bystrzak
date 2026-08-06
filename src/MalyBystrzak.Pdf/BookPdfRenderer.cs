@@ -23,7 +23,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
             page.Width = XUnit.FromPoint(A5Width);
             page.Height = XUnit.FromPoint(A5Height);
             using var graphics = XGraphics.FromPdfPage(page);
-            DrawLogicalPage(graphics, document.Pages[index], document.Settings, index, 0, 0, 1);
+            DrawLogicalPage(graphics, document.Pages[index], document.Settings, document.Instructions, index, 0, 0, 1);
         }
         return Save(pdf);
     }
@@ -37,9 +37,11 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
             page.Width = XUnit.FromPoint(A5Width * 2);
             page.Height = XUnit.FromPoint(A5Height);
             using var graphics = XGraphics.FromPdfPage(page);
-            DrawLogicalPage(graphics, document.Pages[side.LeftPage - 1], document.Settings, side.LeftPage - 1, 0, 0, 1);
+            DrawLogicalPage(graphics, document.Pages[side.LeftPage - 1], document.Settings, document.Instructions,
+                side.LeftPage - 1, 0, 0, 1);
             graphics.DrawLine(new XPen(Color("#e5e7eb"), .5), A5Width, 0, A5Width, A5Height);
-            DrawLogicalPage(graphics, document.Pages[side.RightPage - 1], document.Settings, side.RightPage - 1,
+            DrawLogicalPage(graphics, document.Pages[side.RightPage - 1], document.Settings, document.Instructions,
+                side.RightPage - 1,
                 A5Width, 0, 1);
         }
         return Save(pdf);
@@ -63,6 +65,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
     }
 
     private static void DrawLogicalPage(XGraphics graphics, BookPage page, BookGenerationSettings settings,
+        IReadOnlyList<WorksheetInstruction> instructions,
         int pageIndex, double offsetX, double offsetY, double scale)
     {
         var bounds = new XRect(offsetX, offsetY, A5Width * scale, A5Height * scale);
@@ -70,7 +73,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         switch (page.Kind)
         {
             case BookPageKind.FrontCover:
-                DrawCover(graphics, bounds, settings);
+                DrawCover(graphics, bounds, settings, instructions);
                 break;
             case BookPageKind.Worksheets:
                 DrawWorksheetPage(graphics, bounds, page.Worksheets!, false, pageIndex);
@@ -79,18 +82,20 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
                 DrawWorksheetPage(graphics, bounds, page.Worksheets!, true, pageIndex);
                 break;
             case BookPageKind.BackCover:
-                DrawBackCover(graphics, bounds, settings);
+                DrawBackCover(graphics, bounds, settings, instructions);
                 break;
         }
     }
 
-    private static void DrawCover(XGraphics graphics, XRect page, BookGenerationSettings settings)
+    private static void DrawCover(XGraphics graphics, XRect page, BookGenerationSettings settings,
+        IReadOnlyList<WorksheetInstruction> instructions)
     {
         var frame = Inset(page, 18);
         graphics.DrawRectangle(new XPen(Color("#25316d"), 3), frame);
         DrawCentered(graphics, settings.Title, 28, true, "#f15a8a", page.X + 34, page.Y + 95, page.Width - 68, 52);
         DrawCentered(graphics, settings.Subtitle, 14, true, "#25316d", page.X + 34, page.Y + 150, page.Width - 68, 34);
-        DrawCentered(graphics, "Sudoku • Kakuro • zadania logiczne", 15, true, "#25316d",
+        var puzzleNames = instructions.Count == 0 ? "Zadania logiczne" : string.Join(" • ", instructions.Select(item => item.Title));
+        DrawCentered(graphics, puzzleNames, instructions.Count > 3 ? 11 : 15, true, "#25316d",
             page.X + 34, page.Y + 270, page.Width - 68, 34);
         if (!string.IsNullOrWhiteSpace(settings.ChildName))
             DrawCentered(graphics, settings.ChildName!, 27, true, "#25316d",
@@ -186,7 +191,8 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         }
     }
 
-    private static void DrawBackCover(XGraphics graphics, XRect page, BookGenerationSettings settings)
+    private static void DrawBackCover(XGraphics graphics, XRect page, BookGenerationSettings settings,
+        IReadOnlyList<WorksheetInstruction> instructions)
     {
         graphics.DrawRectangle(new XPen(Color("#25316d"), 3), Inset(page, 18));
         DrawCentered(graphics, "Brawo!", 30, true, "#f15a8a", page.X + 35, page.Y + 66, page.Width - 70, 48);
@@ -197,16 +203,12 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
 
         DrawCentered(graphics, "Jak rozwiązywać zagadki?", 15, true, "#25316d",
             page.X + 42, page.Y + 188, page.Width - 84, 28);
-        var ruleY = page.Y + 225;
-        if (settings.Selections.Any(selection => selection.ModuleId == "sudoku"))
+        var ruleY = page.Y + 215;
+        foreach (var instruction in instructions)
         {
-            DrawRuleCard(graphics, page, ruleY, "Sudoku",
-                "W każdym wierszu, kolumnie i oznaczonym bloku", "każda cyfra może wystąpić tylko raz.", "#88ccf1");
-            ruleY += 82;
+            DrawRuleCard(graphics, page, ruleY, instruction);
+            ruleY += 54;
         }
-        if (settings.Selections.Any(selection => selection.ModuleId == "kakuro"))
-            DrawRuleCard(graphics, page, ruleY, "Kakuro",
-                "Wpisz cyfry 1-9, aby otrzymać podane sumy.", "W jednej grupie cyfry nie mogą się powtarzać.", "#8edbc4");
 
         DrawCentered(graphics, "Stwórz kolejną książeczkę:", 9, true, "#25316d",
             page.X + 35, page.Bottom - 105, page.Width - 70, 18);
@@ -216,15 +218,14 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
             page.X + 35, page.Bottom - 56, page.Width - 70, 20);
     }
 
-    private static void DrawRuleCard(XGraphics graphics, XRect page, double y, string title,
-        string firstLine, string secondLine, string accent)
+    private static void DrawRuleCard(XGraphics graphics, XRect page, double y, WorksheetInstruction instruction)
     {
-        var card = new XRect(page.X + 42, y, page.Width - 84, 70);
-        graphics.DrawRoundedRectangle(new XPen(Color(accent), 1.2), card, new XSize(5, 5));
-        graphics.DrawRectangle(Brush(accent), card.X, card.Y, 7, card.Height);
-        graphics.DrawString(title, Font(10, true), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 21));
-        graphics.DrawString(firstLine, Font(7.5), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 40));
-        graphics.DrawString(secondLine, Font(7.5), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 54));
+        var card = new XRect(page.X + 42, y, page.Width - 84, 46);
+        graphics.DrawRoundedRectangle(new XPen(Color(instruction.Accent), 1.2), card, new XSize(5, 5));
+        graphics.DrawRectangle(Brush(instruction.Accent), card.X, card.Y, 7, card.Height);
+        graphics.DrawString(instruction.Title, Font(8.5, true), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 14));
+        graphics.DrawString(instruction.FirstLine, Font(6.3), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 28));
+        graphics.DrawString(instruction.SecondLine, Font(6.3), Brush("#25316d"), new XPoint(card.X + 19, card.Y + 39));
     }
 
     private static void DrawCentered(XGraphics graphics, string value, double size, bool bold, string color,
