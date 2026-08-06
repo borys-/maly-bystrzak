@@ -1,4 +1,5 @@
-﻿using MalyBystrzak;
+﻿using MalyBystrzak.Core;
+using MalyBystrzak.Modules.Kakuro;
 
 namespace MalyBystrzak.Tests;
 
@@ -36,14 +37,11 @@ public class KakuroGeneratorTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new KakuroGenerator(1).GenerateBook(1, 5));
 
     [Fact]
-    public void KakuroPagesUseTheSameBookletLayout()
-    {
-        var pages = KakuroBookLayout.BuildPages(new KakuroGenerator(7).GenerateBook(60));
-
-        Assert.Equal(12, pages.Count);
-        Assert.Equal(BookPageKind.FrontCover, pages[0].Kind);
-        Assert.Equal(BookPageKind.BackCover, pages[^1].Kind);
-        Assert.Equal(10, pages.Count(page => page.Kind == BookPageKind.Puzzles));
-    }
+    public void KakuroModuleCreatesNeutralVisuals() =>
+        Assert.All(new KakuroModule().Generate(new("3x3", 6, 7)), item =>
+        {
+            Assert.NotEmpty(item.Task.Elements);
+            Assert.NotEmpty(item.Solution.Elements);
+            Assert.Equal("kakuro", item.ModuleId);
+        });
 }
-

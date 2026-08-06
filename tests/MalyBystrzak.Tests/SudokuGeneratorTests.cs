@@ -1,4 +1,5 @@
-﻿using MalyBystrzak;
+﻿using MalyBystrzak.Core;
+using MalyBystrzak.Modules.Sudoku;
 
 namespace MalyBystrzak.Tests;
 
@@ -55,4 +56,3 @@ public class SudokuGeneratorTests
     public void UnsupportedSizeIsRejected() =>
         Assert.Throws<ArgumentOutOfRangeException>(() => new SudokuGenerator(1).GenerateBook(1, 9));
 }
-

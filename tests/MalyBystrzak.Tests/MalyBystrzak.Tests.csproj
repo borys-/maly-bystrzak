@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -11,6 +11,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\..\src\MalyBystrzak.Core\MalyBystrzak.Core.csproj" />
+    <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Sudoku\MalyBystrzak.Modules.Sudoku.csproj" />
+    <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Kakuro\MalyBystrzak.Modules.Kakuro.csproj" />
+    <ProjectReference Include="..\..\src\MalyBystrzak.Pdf\MalyBystrzak.Pdf.csproj" />
   </ItemGroup>
 </Project>
-

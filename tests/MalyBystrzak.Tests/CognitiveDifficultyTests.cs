@@ -1,4 +1,5 @@
-﻿using MalyBystrzak;
+﻿using MalyBystrzak.Modules.Kakuro;
+using MalyBystrzak.Modules.Sudoku;
 
 namespace MalyBystrzak.Tests;
 
@@ -34,4 +35,3 @@ public class CognitiveDifficultyTests
         });
     }
 }
-
