@@ -2,6 +2,7 @@ bin/
 obj/
 output/
 tmp/
+publish/
 TestResults/
 *.user
 *.suo
