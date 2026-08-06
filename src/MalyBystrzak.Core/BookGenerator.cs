@@ -52,7 +52,8 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
             if (errors.Count > 0) throw new ArgumentException(string.Join(" ", errors));
             var generated = settings.RelativeStars
                 ? GenerateInRange(module, selection, count, settings, cancellationToken)
-                : module.Generate(new(selection.VariantId, count, DeriveSeed(settings.Seed, selection, 0)), null, cancellationToken);
+                : Calibrate(module.Generate(
+                    new(selection.VariantId, count, DeriveSeed(settings.Seed, selection, 0)), null, cancellationToken));
             queues[selection] = new Queue<GeneratedWorksheet>(generated);
             completed += count;
             progress?.Report(new(completed, settings.Count, $"Wygenerowano {completed} z {settings.Count} zadań"));
@@ -84,8 +85,8 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
         for (var round = 0; round < 8 && candidates.Count < count * 2; round++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var batch = module.Generate(new(selection.VariantId, Math.Max(60, count * 3),
-                DeriveSeed(settings.Seed, selection, round)), null, cancellationToken);
+            var batch = Calibrate(module.Generate(new(selection.VariantId, Math.Max(60, count * 3),
+                DeriveSeed(settings.Seed, selection, round)), null, cancellationToken));
             candidates.AddRange(batch.Where(item => item.Difficulty.Score >= settings.ScoreMinimum &&
                 item.Difficulty.Score <= settings.ScoreMaximum));
         }
@@ -94,6 +95,24 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
             throw new InvalidOperationException($"Za mało unikalnych zadań {module.DisplayName} w wybranym zakresie.");
         return Enumerable.Range(0, count).Select(index => ordered[count == 1 ? ordered.Length / 2 :
             (int)Math.Round(index * (ordered.Length - 1d) / (count - 1))]).ToArray();
+    }
+
+    private static IReadOnlyList<GeneratedWorksheet> Calibrate(IReadOnlyList<GeneratedWorksheet> worksheets)
+    {
+        if (worksheets.Count == 0) return worksheets;
+        var scoreByRawValue = new Dictionary<int, int>();
+        var rank = 0;
+        foreach (var group in worksheets.GroupBy(item => item.Difficulty.RawScore).OrderBy(group => group.Key))
+        {
+            var averageRank = rank + (group.Count() - 1) / 2d;
+            scoreByRawValue[group.Key] = (int)Math.Round(5 + 90 * (averageRank + .5) / worksheets.Count);
+            rank += group.Count();
+        }
+        return worksheets.Select(item =>
+        {
+            var difficulty = item.Difficulty.WithScore(scoreByRawValue[item.Difficulty.RawScore]);
+            return item with { Difficulty = difficulty, DisplayStars = difficulty.Stars };
+        }).ToArray();
     }
 
     private static void Validate(BookGenerationSettings settings)
