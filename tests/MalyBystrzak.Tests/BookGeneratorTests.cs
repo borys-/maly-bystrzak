@@ -31,11 +31,18 @@ public class BookGeneratorTests
     }
 
     [Fact]
-    public void SameSeedProducesSameMixedBook()
+    public void CliAndWebCompositionProduceSameMixedBookForSameSeed()
     {
-        var first = Generate(18, 445566, AllTypes);
-        var second = Generate(18, 445566, AllTypes);
-        Assert.Equal(first.Worksheets.Select(item => item.Fingerprint), second.Worksheets.Select(item => item.Fingerprint));
+        var settings = Settings(18, 445566, AllTypes);
+        var cliGenerator = new BookGenerator(new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule()]));
+        var webGenerator = new BookGenerator(new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule()]));
+
+        var cliBook = cliGenerator.Generate(settings);
+        var webBook = webGenerator.Generate(settings);
+
+        Assert.Equal(cliBook.Worksheets.Select(item => item.Fingerprint), webBook.Worksheets.Select(item => item.Fingerprint));
+        Assert.Equal(cliBook.Worksheets.Select(item => item.Difficulty), webBook.Worksheets.Select(item => item.Difficulty));
+        Assert.Equal(cliBook.CreateDocument().Pages.Select(page => page.Kind), webBook.CreateDocument().Pages.Select(page => page.Kind));
     }
 
     [Fact]
