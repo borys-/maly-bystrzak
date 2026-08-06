@@ -18,6 +18,9 @@ public static class BookLayout
         return pages;
     }
 
+    public static IReadOnlyList<BookPage> BuildSolutionPages(IReadOnlyList<GeneratedWorksheet> worksheets) =>
+        worksheets.Chunk(6).Select(group => new BookPage(BookPageKind.Solutions, group)).ToArray();
+
     public static IReadOnlyList<SheetSide> CreateBookletOrder(int pageCount)
     {
         if (pageCount <= 0 || pageCount % 4 != 0)

@@ -65,6 +65,20 @@ public class PdfRendererTests
     }
 
     [Fact]
+    public void SolutionsDocumentContainsOnlySolutionPagesRegardlessOfBookSetting()
+    {
+        var registry = new WorksheetModuleRegistry([new SudokuModule()]);
+        var book = new BookGenerator(registry).Generate(new("Książeczka", "Łamigłówki", null, 7, 54321,
+            [new("sudoku", "4x4")], IncludeSolutions: false));
+        var document = book.CreateSolutionsDocument();
+
+        Assert.Equal(2, document.Pages.Count);
+        Assert.All(document.Pages, page => Assert.Equal(BookPageKind.Solutions, page.Kind));
+        using var pdf = PdfReader.Open(new MemoryStream(new BookPdfRenderer().RenderPreview(document)));
+        Assert.Equal(2, pdf.PageCount);
+    }
+
+    [Fact]
     public void CsvContainsEveryWorksheet()
     {
         var worksheets = new SudokuModule().Generate(new("4x4", 6, 7));

@@ -106,10 +106,7 @@
                 <div class="preview-toolbar">
                     <div class="preview-tabs" aria-label="Rodzaj podglądu">
                         <button type="button" class="@(!showingSolutions ? "active" : null)" data-testid="preview-tasks" @onclick="() => showingSolutions = false">Zadania</button>
-                        @if (book.Settings.IncludeSolutions)
-                        {
-                            <button type="button" class="@(showingSolutions ? "active" : null)" data-testid="preview-solutions" @onclick="() => showingSolutions = true">Rozwiązania</button>
-                        }
+                        <button type="button" class="@(showingSolutions ? "active" : null)" data-testid="preview-solutions" @onclick="() => showingSolutions = true">Rozwiązania</button>
                     </div>
                     <span data-testid="preview-page-label">Strona @(previewPage + 1) z @PreviewPageCount</span>
                 </div>
@@ -132,6 +129,7 @@
                     <button class="primary-button" data-testid="download-booklet" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
                     <div class="secondary-actions">
                         <button @onclick="DownloadPreviewAsync">Podgląd A5</button>
+                        <button data-testid="download-solutions" @onclick="DownloadSolutionsAsync">Same rozwiązania</button>
                         <button @onclick="DownloadCsvAsync">Raport CSV</button>
                     </div>
                 </div>
@@ -246,7 +244,12 @@
 
     private async Task DownloadBookletAsync() => await DownloadPdfAsync("maly-bystrzak-broszura-a4.pdf", true);
     private async Task DownloadPreviewAsync() => await DownloadPdfAsync("maly-bystrzak-podglad-a5.pdf", false);
-    private async Task DownloadPdfAsync(string name, bool booklet)
+    private async Task DownloadSolutionsAsync()
+    {
+        if (book is null) return;
+        await DownloadPdfAsync("maly-bystrzak-rozwiazania-a5.pdf", false, book.CreateSolutionsDocument());
+    }
+    private async Task DownloadPdfAsync(string name, bool booklet, BookDocument? source = null)
     {
         if (book is null) return;
         isExporting = true;
@@ -254,7 +257,7 @@
         await Task.Yield();
         try
         {
-            var document = book.CreateDocument();
+            var document = source ?? book.CreateDocument();
             var bytes = booklet ? PdfRenderer.RenderBooklet(document) : PdfRenderer.RenderPreview(document);
             await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", name, "application/pdf", bytes);
         }

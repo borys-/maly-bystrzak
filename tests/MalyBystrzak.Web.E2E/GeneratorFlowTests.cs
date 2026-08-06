@@ -1,5 +1,6 @@
 using Microsoft.Playwright;
 using Microsoft.Playwright.Xunit;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace MalyBystrzak.Web.E2E;
@@ -28,6 +29,9 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.GetByLabel("Liczba zadań").FillAsync("8");
         await Page.GetByTestId("generate").ClickAsync();
         await Expect(Page.GetByTestId("result")).ToContainTextAsync("8 zadań", new() { Timeout = 60_000 });
+        await Page.GetByTestId("preview-solutions").ClickAsync();
+        await Expect(Page.Locator(".preview-card svg").First).ToHaveAttributeAsync("aria-label", new Regex("Rozwiązanie 1"));
+        await Page.GetByTestId("preview-tasks").ClickAsync();
         await Expect(Page.GetByTestId("preview-page-label")).ToHaveTextAsync("Strona 1 z 2");
         await Expect(Page.GetByText("Nr 1", new() { Exact = true })).ToBeVisibleAsync();
         await Page.GetByTestId("preview-next").ClickAsync();
@@ -40,6 +44,8 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         Assert.True(visibleGlyphs > 0);
         var download = await Page.RunAndWaitForDownloadAsync(() => Page.GetByTestId("download-booklet").ClickAsync());
         Assert.Equal("maly-bystrzak-broszura-a4.pdf", download.SuggestedFilename);
+        var solutions = await Page.RunAndWaitForDownloadAsync(() => Page.GetByTestId("download-solutions").ClickAsync());
+        Assert.Equal("maly-bystrzak-rozwiazania-a5.pdf", solutions.SuggestedFilename);
     }
 
     [Fact]

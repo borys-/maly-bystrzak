@@ -8,6 +8,7 @@ public sealed record BookGenerationSettings(
 public sealed record GeneratedBook(BookGenerationSettings Settings, IReadOnlyList<GeneratedWorksheet> Worksheets)
 {
     public BookDocument CreateDocument() => new(Settings, BookLayout.BuildPages(Worksheets, Settings.IncludeSolutions));
+    public BookDocument CreateSolutionsDocument() => new(Settings, BookLayout.BuildSolutionPages(Worksheets));
 }
 
 public sealed record GeneratorProject(
