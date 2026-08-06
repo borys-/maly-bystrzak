@@ -34,6 +34,14 @@ public class NonogramGeneratorTests
     }
 
     [Fact]
+    public void ModuleSupportsMaximumBookSize()
+    {
+        var worksheets = new NonogramModule().Generate(new ModuleGenerationRequest("5x5", 180, 20260806));
+        Assert.Equal(180, worksheets.Count);
+        Assert.Equal(180, worksheets.Select(item => item.Fingerprint).Distinct().Count());
+    }
+
+    [Fact]
     public void ModuleCreatesReadableTaskAndFilledSolution()
     {
         var worksheets = new NonogramModule().Generate(new ModuleGenerationRequest("10x10", 4, 31));
