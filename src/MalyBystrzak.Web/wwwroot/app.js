@@ -30,7 +30,16 @@ window.malyBystrzakStore = (() => {
   return {
     list: async () => {
       const rows = await complete((await transaction('readonly')).getAll());
-      return JSON.stringify(rows.map(row => JSON.parse(row.summary)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
+      const projects = rows.flatMap(row => {
+        try {
+          const document = JSON.parse(row.document);
+          const summary = JSON.parse(row.summary);
+          return document.schemaVersion === 1 ? [summary] : [];
+        } catch {
+          return [];
+        }
+      });
+      return JSON.stringify(projects.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
     },
     get: async id => {
       const row = await complete((await transaction('readonly')).get(id));

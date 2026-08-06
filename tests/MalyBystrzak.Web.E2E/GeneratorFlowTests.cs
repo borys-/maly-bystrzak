@@ -43,6 +43,35 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     }
 
     [Fact]
+    public async Task IgnoresCorruptedAndUnsupportedProjects()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.EvaluateAsync("""
+            async () => {
+              const db = await new Promise((resolve, reject) => {
+                const request = indexedDB.open('maly-bystrzak', 1);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              });
+              const store = db.transaction('projects', 'readwrite').objectStore('projects');
+              store.put({ id: 'broken', document: '{', summary: '{' });
+              store.put({
+                id: 'future',
+                document: JSON.stringify({ schemaVersion: 999 }),
+                summary: JSON.stringify({ id: 'future', name: 'Nieobsługiwany projekt', updatedAt: '2026-01-01T00:00:00Z', worksheetCount: 0 })
+              });
+              await new Promise((resolve, reject) => {
+                store.transaction.oncomplete = resolve;
+                store.transaction.onerror = () => reject(store.transaction.error);
+              });
+            }
+            """);
+        await Page.ReloadAsync();
+        await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
+        await Expect(Page.GetByText("Nieobsługiwany projekt")).ToHaveCountAsync(0);
+    }
+
+    [Fact]
     public async Task MobileLayoutHasNoHorizontalOverflow()
     {
         await Page.SetViewportSizeAsync(390, 844);
