@@ -185,6 +185,7 @@
         foreach (var variant in module.Variants)
             choices.Add(new(module.Id, variant.Id, variant.DisplayName, variant.Description,
                 module.Id == "sudoku" && variant.Id == "4x4"));
+        await RestorePreferencesAsync();
         await RefreshProjectsAsync();
     }
 
@@ -260,11 +261,8 @@
         var project = await ProjectStore.GetAsync(id);
         if (project is null) { error = "Nie udało się odczytać projektu."; return; }
         activeProjectId = project.Id; book = project.Book;
-        title = book.Settings.Title; subtitle = book.Settings.Subtitle; childName = book.Settings.ChildName;
-        count = book.Settings.Count; seed = book.Settings.Seed; personalized = book.Settings.RelativeStars;
-        scoreMin = book.Settings.ScoreMinimum ?? 20; scoreMax = book.Settings.ScoreMaximum ?? 80;
-        includeSolutions = book.Settings.IncludeSolutions; projectName = project.Name;
-        foreach (var choice in choices) choice.Selected = book.Settings.Selections.Contains(new(choice.ModuleId, choice.VariantId));
+        ApplySettings(book.Settings);
+        projectName = project.Name;
         message = "Projekt został otwarty.";
         await JS.InvokeVoidAsync("scrollTo", new { top = 520, behavior = "smooth" });
     }
@@ -276,6 +274,28 @@
         await RefreshProjectsAsync();
     }
     private async Task RefreshProjectsAsync() => projects = await ProjectStore.ListAsync();
+
+    private async Task RestorePreferencesAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("malyBystrzak.getPreference", "last-settings");
+            if (!string.IsNullOrWhiteSpace(json) && JsonSerializer.Deserialize<BookGenerationSettings>(json) is { } settings)
+                ApplySettings(settings);
+        }
+        catch (JsonException) { }
+    }
+
+    private void ApplySettings(BookGenerationSettings settings)
+    {
+        title = settings.Title; subtitle = settings.Subtitle; childName = settings.ChildName;
+        count = settings.Count; seed = settings.Seed; personalized = settings.RelativeStars;
+        scoreMin = settings.ScoreMinimum ?? 20; scoreMax = settings.ScoreMaximum ?? 80;
+        includeSolutions = settings.IncludeSolutions;
+        foreach (var choice in choices)
+            choice.Selected = settings.Selections.Contains(new(choice.ModuleId, choice.VariantId));
+    }
+
     private static string Dots(int count) => new('●', count);
 
     private sealed class VariantChoice(string moduleId, string variantId, string name, string description, bool selected)

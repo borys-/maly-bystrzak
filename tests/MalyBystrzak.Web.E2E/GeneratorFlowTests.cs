@@ -65,6 +65,23 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     }
 
     [Fact]
+    public async Task RestoresLastGeneratorPreferencesAfterReload()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.GetByLabel("Tytuł").FillAsync("Zapamiętana książeczka");
+        await Page.GetByLabel("Liczba zadań").FillAsync("5");
+        await Page.GetByTestId("variant-kakuro-3x3").ClickAsync();
+        await Page.GetByTestId("generate").ClickAsync();
+        await Expect(Page.GetByTestId("result")).ToBeVisibleAsync(new() { Timeout = 60_000 });
+
+        await Page.ReloadAsync();
+
+        await Expect(Page.GetByLabel("Tytuł")).ToHaveValueAsync("Zapamiętana książeczka");
+        await Expect(Page.GetByLabel("Liczba zadań")).ToHaveValueAsync("5");
+        await Expect(Page.GetByTestId("variant-kakuro-3x3").Locator("input")).ToBeCheckedAsync();
+    }
+
+    [Fact]
     public async Task IgnoresCorruptedAndUnsupportedProjects()
     {
         await Page.GotoAsync(server.BaseUrl);
