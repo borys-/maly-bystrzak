@@ -28,9 +28,11 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     {
         await Page.GotoAsync(server.BaseUrl);
         await Page.GetByTestId("variant-kakuro-3x3").ClickAsync();
-        await Page.GetByLabel("Liczba zadań").FillAsync("8");
+        await Page.GetByTestId("variant-maze-9x9").ClickAsync();
+        await Page.GetByTestId("variant-nonogram-5x5").ClickAsync();
+        await Page.GetByLabel("Liczba zadań").FillAsync("12");
         await Page.GetByTestId("generate").ClickAsync();
-        await Expect(Page.GetByTestId("result")).ToContainTextAsync("8 zadań", new() { Timeout = 60_000 });
+        await Expect(Page.GetByTestId("result")).ToContainTextAsync("12 zadań", new() { Timeout = 60_000 });
         await Page.GetByTestId("preview-solutions").ClickAsync();
         await Expect(Page.Locator(".preview-card svg").First).ToHaveAttributeAsync("aria-label", new Regex("Rozwiązanie 1"));
         await Page.GetByTestId("preview-tasks").ClickAsync();
