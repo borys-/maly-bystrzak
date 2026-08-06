@@ -49,6 +49,22 @@ public class PdfRendererTests
     }
 
     [Fact]
+    public void PdfEmbedsLatoAndPreservesPolishMetadata()
+    {
+        var registry = new WorksheetModuleRegistry([new SudokuModule()]);
+        var book = new BookGenerator(registry).Generate(new("Moja książeczka", "Łamigłówki", "Łucja", 2, 13579,
+            [new("sudoku", "4x4")], IncludeSolutions: false));
+        var bytes = new BookPdfRenderer().RenderPreview(book.CreateDocument());
+        var source = Encoding.ASCII.GetString(bytes);
+
+        using var document = PdfReader.Open(new MemoryStream(bytes));
+        Assert.Equal("Mały Bystrzak", document.Info.Author);
+        Assert.Equal("Moja książeczka — Podgląd A5", document.Info.Title);
+        Assert.Contains("Lato", source, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/FontFile2", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void CsvContainsEveryWorksheet()
     {
         var worksheets = new SudokuModule().Generate(new("4x4", 6, 7));
