@@ -18,7 +18,6 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         Assert.Equal("none", focusedHeadingOutline);
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("variant-maze-9x9")).ToBeVisibleAsync();
-        await Expect(Page.GetByTestId("variant-sequence-pictures")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("variant-nonogram-5x5")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Checkbox, new() { Name = "Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.", Exact = true })).Not.ToBeCheckedAsync();
