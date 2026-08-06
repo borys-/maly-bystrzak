@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\src\MalyBystrzak.Core\MalyBystrzak.Core.csproj" />
     <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Sudoku\MalyBystrzak.Modules.Sudoku.csproj" />
     <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Kakuro\MalyBystrzak.Modules.Kakuro.csproj" />
+    <ProjectReference Include="..\..\src\MalyBystrzak.Modules.Mazes\MalyBystrzak.Modules.Mazes.csproj" />
     <ProjectReference Include="..\..\src\MalyBystrzak.Pdf\MalyBystrzak.Pdf.csproj" />
   </ItemGroup>
 </Project>
