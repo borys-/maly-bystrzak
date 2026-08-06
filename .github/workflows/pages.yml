@@ -1,0 +1,70 @@
+name: Weryfikacja i publikacja GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Kompilacja i testy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+
+      - name: Zainstaluj .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Przywróć zależności
+        run: dotnet restore MalyBystrzak.sln
+
+      - name: Skompiluj rozwiązanie
+        run: dotnet build MalyBystrzak.sln -c Release --no-restore
+
+      - name: Uruchom testy domenowe i integracyjne
+        run: dotnet test tests/MalyBystrzak.Tests/MalyBystrzak.Tests.csproj -c Release --no-build
+
+      - name: Zainstaluj Chromium dla Playwright
+        shell: pwsh
+        run: tests/MalyBystrzak.Web.E2E/bin/Release/net8.0/playwright.ps1 install --with-deps chromium
+
+      - name: Uruchom testy przeglądarkowe
+        run: dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
+
+      - name: Opublikuj aplikację WebAssembly
+        run: dotnet publish src/MalyBystrzak.Web/MalyBystrzak.Web.csproj -c Release --no-build -o publish
+
+      - name: Przygotuj aplikację dla ścieżki GitHub Pages
+        shell: pwsh
+        run: |
+          $index = "publish/wwwroot/index.html"
+          (Get-Content $index -Raw).Replace('<base href="/" />', '<base href="/maly-bystrzak/" />') | Set-Content $index -NoNewline
+          Copy-Item $index "publish/wwwroot/404.html"
+          New-Item "publish/wwwroot/.nojekyll" -ItemType File
+
+      - name: Przekaż artefakt GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish/wwwroot
+
+  deploy:
+    name: Publikacja
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Opublikuj GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
