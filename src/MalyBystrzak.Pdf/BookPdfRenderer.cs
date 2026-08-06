@@ -175,8 +175,10 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
     {
         graphics.DrawRectangle(new XPen(Color("#25316d"), 3), Inset(page, 18));
         DrawCentered(graphics, "Brawo!", 30, true, "#f15a8a", page.X + 35, page.Y + 185, page.Width - 70, 48);
-        DrawCentered(graphics, "Każde rozwiązane zadanie ćwiczy spostrzegawczość i logiczne myślenie.",
-            13, false, "#25316d", page.X + 48, page.Y + 245, page.Width - 96, 70);
+        DrawCentered(graphics, "Każde rozwiązane zadanie ćwiczy", 12, false, "#25316d",
+            page.X + 48, page.Y + 245, page.Width - 96, 24);
+        DrawCentered(graphics, "spostrzegawczość i logiczne myślenie.", 12, false, "#25316d",
+            page.X + 48, page.Y + 271, page.Width - 96, 24);
         DrawCentered(graphics, $"Wygenerowano z ziarnem: {settings.Seed}", 7, false, "#6b7280",
             page.X + 35, page.Bottom - 56, page.Width - 70, 20);
     }
