@@ -43,6 +43,28 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     }
 
     [Fact]
+    public async Task OpensOverwritesAndDeletesProject()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.GetByLabel("Liczba zadań").FillAsync("4");
+        await Page.GetByTestId("generate").ClickAsync();
+        await Expect(Page.GetByTestId("result")).ToBeVisibleAsync(new() { Timeout = 60_000 });
+        await Page.GetByLabel("Nazwa projektu").FillAsync("Pierwsza nazwa");
+        await Page.GetByTestId("save-project").ClickAsync();
+
+        await Page.GetByTestId("open-project").ClickAsync();
+        await Expect(Page.GetByText("Projekt został otwarty.")).ToBeVisibleAsync();
+        await Page.GetByLabel("Nazwa projektu").FillAsync("Nazwa po zmianie");
+        await Page.GetByTestId("save-project").ClickAsync();
+
+        await Expect(Page.GetByText("Projekt został zaktualizowany.")).ToBeVisibleAsync();
+        await Expect(Page.Locator(".project-list article")).ToHaveCountAsync(1);
+        await Expect(Page.GetByText("Nazwa po zmianie")).ToBeVisibleAsync();
+        await Page.GetByTestId("delete-project").ClickAsync();
+        await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
+    }
+
+    [Fact]
     public async Task IgnoresCorruptedAndUnsupportedProjects()
     {
         await Page.GotoAsync(server.BaseUrl);

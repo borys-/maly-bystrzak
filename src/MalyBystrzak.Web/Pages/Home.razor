@@ -123,7 +123,7 @@
                 </div>
                 <div class="save-project">
                     <input aria-label="Nazwa projektu" maxlength="60" @bind="projectName" />
-                    <button data-testid="save-project" @onclick="SaveProjectAsync">Zapisz projekt</button>
+                    <button data-testid="save-project" @onclick="SaveProjectAsync">@(activeProjectId is null ? "Zapisz projekt" : "Nadpisz projekt")</button>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(message)) { <div class="alert success" role="status">@message</div> }
             }
@@ -148,8 +148,8 @@
                 <article>
                     <div class="project-badge">@project.WorksheetCount</div>
                     <div><strong>@project.Name</strong><small>@project.UpdatedAt.LocalDateTime.ToString("dd.MM.yyyy, HH:mm") · @project.WorksheetCount zadań</small></div>
-                    <button @onclick="() => LoadProjectAsync(project.Id)">Otwórz</button>
-                    <button class="delete-button" title="Usuń projekt" @onclick="() => DeleteProjectAsync(project.Id)">×</button>
+                    <button data-testid="open-project" @onclick="() => LoadProjectAsync(project.Id)">Otwórz</button>
+                    <button data-testid="delete-project" class="delete-button" title="Usuń projekt" @onclick="() => DeleteProjectAsync(project.Id)">×</button>
                 </article>
             }
         </div>
@@ -160,6 +160,7 @@
     private readonly List<VariantChoice> choices = [];
     private IReadOnlyList<ProjectSummary> projects = [];
     private GeneratedBook? book;
+    private Guid? activeProjectId;
     private string title = "Moja książeczka zadań";
     private string subtitle = "Łamigłówki dla małych bystrzaków";
     private string? childName;
@@ -247,8 +248,10 @@
     private async Task SaveProjectAsync()
     {
         if (book is null || string.IsNullOrWhiteSpace(projectName)) return;
-        await ProjectStore.SaveAsync(new(GeneratorProject.CurrentSchemaVersion, Guid.NewGuid(), projectName.Trim(), DateTimeOffset.UtcNow, book));
-        message = "Projekt został zapisany na tym urządzeniu.";
+        var overwriting = activeProjectId is not null;
+        activeProjectId ??= Guid.NewGuid();
+        await ProjectStore.SaveAsync(new(GeneratorProject.CurrentSchemaVersion, activeProjectId.Value, projectName.Trim(), DateTimeOffset.UtcNow, book));
+        message = overwriting ? "Projekt został zaktualizowany." : "Projekt został zapisany na tym urządzeniu.";
         await RefreshProjectsAsync();
     }
 
@@ -256,7 +259,7 @@
     {
         var project = await ProjectStore.GetAsync(id);
         if (project is null) { error = "Nie udało się odczytać projektu."; return; }
-        book = project.Book;
+        activeProjectId = project.Id; book = project.Book;
         title = book.Settings.Title; subtitle = book.Settings.Subtitle; childName = book.Settings.ChildName;
         count = book.Settings.Count; seed = book.Settings.Seed; personalized = book.Settings.RelativeStars;
         scoreMin = book.Settings.ScoreMinimum ?? 20; scoreMax = book.Settings.ScoreMaximum ?? 80;
@@ -266,7 +269,12 @@
         await JS.InvokeVoidAsync("scrollTo", new { top = 520, behavior = "smooth" });
     }
 
-    private async Task DeleteProjectAsync(Guid id) { await ProjectStore.DeleteAsync(id); await RefreshProjectsAsync(); }
+    private async Task DeleteProjectAsync(Guid id)
+    {
+        await ProjectStore.DeleteAsync(id);
+        if (activeProjectId == id) activeProjectId = null;
+        await RefreshProjectsAsync();
+    }
     private async Task RefreshProjectsAsync() => projects = await ProjectStore.ListAsync();
     private static string Dots(int count) => new('●', count);
 
