@@ -20,10 +20,10 @@ jobs:
       image: mcr.microsoft.com/playwright/dotnet:v1.61.0-noble
     steps:
       - name: Pobierz repozytorium
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Zainstaluj .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
@@ -53,7 +53,7 @@ jobs:
           New-Item "publish/wwwroot/.nojekyll" -ItemType File
 
       - name: Przekaż artefakt GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: publish/wwwroot
 
@@ -67,6 +67,6 @@ jobs:
     steps:
       - name: Opublikuj GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
         with:
           timeout: 900000
