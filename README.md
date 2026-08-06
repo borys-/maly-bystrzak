@@ -18,6 +18,8 @@ Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
 
 Treść książeczek i zapisane projekty nie są wysyłane poza urządzenie użytkownika.
 
+Wynik trudności 0–100 jest normalizowany percentylowo osobno dla każdego wariantu, dzięki czemu można sensownie mieszać różne rodzaje zadań. Raport CSV zachowuje również nieobcięty wynik techniczny modułu, przeznaczony do przyszłej kalibracji na podstawie czasu, błędów i podpowiedzi.
+
 ## Architektura
 
 - `MalyBystrzak.Core` — modele książeczek, kontrakty modułów i orkiestracja generowania;

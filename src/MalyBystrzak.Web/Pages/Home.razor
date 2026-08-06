@@ -61,7 +61,7 @@
                     <label><span>Liczba zadań</span><input type="number" min="1" max="180" @bind="count" /></label>
                     <label><span>Ziarno zestawu</span><span class="input-action"><input type="number" @bind="seed" /><button type="button" @onclick="RandomizeSeed" title="Wylosuj ziarno">↻</button></span></label>
                 </div>
-                <label class="toggle-row"><input type="checkbox" @bind="personalized" /><span><strong>Personalizuj zakres trudności</strong><small>Dobierz zadania według wyniku 0–100 i nadaj względne poziomy.</small></span></label>
+                <label class="toggle-row"><input type="checkbox" @bind="personalized" /><span><strong>Personalizuj zakres trudności</strong><small>Wynik 0–100 jest percentylem porównywalnym między rodzajami zadań.</small></span></label>
                 @if (personalized)
                 {
                     <div class="range-row">
