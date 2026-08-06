@@ -24,6 +24,9 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.GetByLabel("Liczba zadań").FillAsync("8");
         await Page.GetByTestId("generate").ClickAsync();
         await Expect(Page.GetByTestId("result")).ToContainTextAsync("8 zadań", new() { Timeout = 60_000 });
+        var visibleGlyphs = await Page.Locator(".preview-card svg text").EvaluateAllAsync<int>(
+            "elements => elements.filter(element => element.getBoundingClientRect().width > 0).length");
+        Assert.True(visibleGlyphs > 0);
         var download = await Page.RunAndWaitForDownloadAsync(() => Page.GetByTestId("download-booklet").ClickAsync());
         Assert.Equal("maly-bystrzak-broszura-a4.pdf", download.SuggestedFilename);
     }

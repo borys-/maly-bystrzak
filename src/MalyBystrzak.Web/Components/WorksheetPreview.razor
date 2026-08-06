@@ -12,8 +12,8 @@
                       stroke="@line.Color" stroke-width="@F(line.Width)" />
                 break;
             case VisualText visualText:
-                <text><tspan x="@F(visualText.X)" y="@F(visualText.Y)" font-size="@F(visualText.Size)" fill="@visualText.Color"
-                      font-weight="@(visualText.Bold ? "700" : "400")" text-anchor="@visualText.Anchor">@visualText.Text</tspan></text>
+                <svg:text x="@F(visualText.X)" y="@F(visualText.Y)" font-size="@F(visualText.Size)" fill="@visualText.Color"
+                          font-weight="@(visualText.Bold ? "700" : "400")" text-anchor="@visualText.Anchor">@visualText.Text</svg:text>
                 break;
         }
     }
