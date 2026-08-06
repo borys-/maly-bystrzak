@@ -58,7 +58,11 @@ public sealed class WebServerFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (process is { HasExited: false }) process.Kill(entireProcessTree: true);
+        if (process is { HasExited: false })
+        {
+            process.Kill(entireProcessTree: true);
+            await process.WaitForExitAsync();
+        }
         process?.Dispose();
         if (serverCancellation is not null) await serverCancellation.CancelAsync();
         listener?.Close();
