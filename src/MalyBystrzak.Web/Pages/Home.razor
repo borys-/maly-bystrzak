@@ -166,7 +166,7 @@
     private string? childName;
     private string projectName = "Moja książeczka";
     private int count = 24;
-    private int seed = 12345;
+    private int seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
     private bool personalized;
     private int scoreMin = 20;
     private int scoreMax = 80;
@@ -281,15 +281,17 @@
         {
             var json = await JS.InvokeAsync<string?>("malyBystrzak.getPreference", "last-settings");
             if (!string.IsNullOrWhiteSpace(json) && JsonSerializer.Deserialize<BookGenerationSettings>(json) is { } settings)
-                ApplySettings(settings);
+                ApplySettings(settings, restoreSeed: false);
         }
         catch (JsonException) { }
     }
 
-    private void ApplySettings(BookGenerationSettings settings)
+    private void ApplySettings(BookGenerationSettings settings, bool restoreSeed = true)
     {
         title = settings.Title; subtitle = settings.Subtitle; childName = settings.ChildName;
-        count = settings.Count; seed = settings.Seed; personalized = settings.RelativeStars;
+        count = settings.Count;
+        if (restoreSeed) seed = settings.Seed;
+        personalized = settings.RelativeStars;
         scoreMin = settings.ScoreMinimum ?? 20; scoreMax = settings.ScoreMaximum ?? 80;
         includeSolutions = settings.IncludeSolutions;
         foreach (var choice in choices)

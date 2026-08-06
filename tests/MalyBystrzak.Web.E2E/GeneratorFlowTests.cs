@@ -85,6 +85,19 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     }
 
     [Fact]
+    public async Task DrawsNewSeedOnEveryFreshPageLoad()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        var seedInput = Page.GetByLabel("Ziarno zestawu ↻");
+        var firstSeed = await seedInput.InputValueAsync();
+
+        await Page.ReloadAsync();
+
+        var secondSeed = await Page.GetByLabel("Ziarno zestawu ↻").InputValueAsync();
+        Assert.NotEqual(firstSeed, secondSeed);
+    }
+
+    [Fact]
     public async Task IgnoresCorruptedAndUnsupportedProjects()
     {
         await Page.GotoAsync(server.BaseUrl);
