@@ -1,6 +1,8 @@
 using MalyBystrzak.Cli;
 using MalyBystrzak.Core;
 using MalyBystrzak.Modules.Kakuro;
+using MalyBystrzak.Modules.Mazes;
+using MalyBystrzak.Modules.Nonograms;
 using MalyBystrzak.Modules.Sudoku;
 using MalyBystrzak.Pdf;
 
@@ -31,8 +33,8 @@ try
     Directory.CreateDirectory(cli.OutputDirectory);
     var selections = CreateSelections(cli);
     var settings = new BookGenerationSettings(cli.Title, cli.Subtitle, cli.ChildName, cli.Count, cli.Seed,
-        selections, cli.ScoreMinimum, cli.ScoreMaximum, cli.RelativeStars, IncludeSolutions: true);
-    var registry = new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule()]);
+        selections, cli.ScoreMinimum, cli.ScoreMaximum, cli.RelativeStars, cli.IncludeSolutions);
+    var registry = new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule(), new MazeModule(), new NonogramModule()]);
     var progress = new Progress<GenerationProgress>(value => Console.WriteLine(value.Message));
     var book = new BookGenerator(registry).Generate(settings, progress);
     var document = book.CreateDocument();
@@ -57,11 +59,18 @@ static IReadOnlyList<ModuleSelection> CreateSelections(CliOptions options) => op
 {
     PuzzleKind.Sudoku => [new("sudoku", $"{options.Size}x{options.Size}")],
     PuzzleKind.Kakuro => [new("kakuro", $"{options.Size}x{options.Size}")],
+    PuzzleKind.Maze => [new("maze", $"{options.Size}x{options.Size}")],
+    PuzzleKind.Nonogram => [new("nonogram", $"{options.Size}x{options.Size}")],
     _ => options.Types.Select(type => type switch
     {
         PuzzleType.Sudoku4 => new ModuleSelection("sudoku", "4x4"),
         PuzzleType.Sudoku6 => new ModuleSelection("sudoku", "6x6"),
         PuzzleType.Kakuro3 => new ModuleSelection("kakuro", "3x3"),
-        _ => new ModuleSelection("kakuro", "4x4")
+        PuzzleType.Kakuro4 => new ModuleSelection("kakuro", "4x4"),
+        PuzzleType.Maze9 => new ModuleSelection("maze", "9x9"),
+        PuzzleType.Maze15 => new ModuleSelection("maze", "15x15"),
+        PuzzleType.Nonogram5 => new ModuleSelection("nonogram", "5x5"),
+        PuzzleType.Nonogram7 => new ModuleSelection("nonogram", "7x7"),
+        _ => new ModuleSelection("nonogram", "10x10")
     }).ToArray()
 };

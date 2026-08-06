@@ -3,8 +3,8 @@ using MalyBystrzak.Core;
 
 namespace MalyBystrzak.Cli;
 
-internal enum PuzzleKind { Sudoku, Kakuro, Mixed }
-internal enum PuzzleType { Sudoku4, Sudoku6, Kakuro3, Kakuro4 }
+internal enum PuzzleKind { Sudoku, Kakuro, Maze, Nonogram, Mixed }
+internal enum PuzzleType { Sudoku4, Sudoku6, Kakuro3, Kakuro4, Maze9, Maze15, Nonogram5, Nonogram7, Nonogram10 }
 
 internal sealed record CliOptions(
     PuzzleKind Kind,
@@ -16,6 +16,7 @@ internal sealed record CliOptions(
     string? ChildName,
     int Seed,
     bool Overwrite,
+    bool IncludeSolutions,
     IReadOnlyList<PuzzleType> Types,
     int? ScoreMinimum,
     int? ScoreMaximum,
@@ -25,35 +26,42 @@ internal sealed record CliOptions(
     {
         PuzzleKind.Sudoku => "sudoku-podglad-a5.pdf",
         PuzzleKind.Kakuro => "kakuro-podglad-a5.pdf",
+        PuzzleKind.Maze => "labirynty-podglad-a5.pdf",
+        PuzzleKind.Nonogram => "nonogramy-podglad-a5.pdf",
         _ => "lamiglowki-podglad-a5.pdf"
     };
     public string BookletFileName => Kind switch
     {
         PuzzleKind.Sudoku => "sudoku-broszura-a4.pdf",
         PuzzleKind.Kakuro => "kakuro-broszura-a4.pdf",
+        PuzzleKind.Maze => "labirynty-broszura-a4.pdf",
+        PuzzleKind.Nonogram => "nonogramy-broszura-a4.pdf",
         _ => "lamiglowki-broszura-a4.pdf"
     };
 
     public static string HelpText => """
-        Generator kolorowych książeczek Sudoku dla dzieci
+        Generator książeczek z łamigłówkami dla dzieci
 
         Użycie:
           maly-bystrzak generate [opcje]   Generuje Sudoku 4x4 lub 6x6
           maly-bystrzak kakuro [opcje]     Generuje dziecięce Kakuro 3x3 lub 4x4
+          maly-bystrzak maze [opcje]       Generuje labirynty 9x9 lub 15x15
+          maly-bystrzak nonogram [opcje]   Generuje nonogramy 5x5, 7x7 lub 10x10
           maly-bystrzak mixed [opcje]      Generuje mieszaną książeczkę
 
         Opcje:
           --output <katalog>      Katalog wynikowy (domyślnie: ./output)
           --count <liczba>        Liczba zadań (domyślnie: 60)
-          --size <liczba>         Sudoku: 4 lub 6; Kakuro: 3 lub 4
+          --size <liczba>         Sudoku: 4/6; Kakuro: 3/4; labirynt: 9/15; nonogram: 5/7/10
           --title <tekst>         Tytuł okładki
           --subtitle <tekst>      Podtytuł okładki
           --child-name <tekst>    Imię dziecka wyświetlane na okładce
           --seed <liczba>         Ziarno generatora do odtworzenia zestawu
-          --types <lista>         Typy dla mixed, np. sudoku4,sudoku6,kakuro
+          --types <lista>         Typy dla mixed, np. sudoku4,maze9,nonogram7
           --score-min <0-100>     Minimalny wskaźnik dla mixed
           --score-max <0-100>     Maksymalny wskaźnik dla mixed
           --relative-stars        Równe grupy 1-5 gwiazdek wewnątrz książeczki
+          --include-solutions     Dołącz rozwiązania na końcu książeczki
           --overwrite             Zezwól na zastąpienie istniejących plików
           --help, -h              Pokaż tę pomoc
 
@@ -61,6 +69,8 @@ internal sealed record CliOptions(
           maly-bystrzak generate --count 60 --size 4
           maly-bystrzak generate --child-name "Zosia" --title "Moja książeczka Sudoku"
           maly-bystrzak generate --size 6 --count 72 --seed 12345
+          maly-bystrzak maze --size 15 --count 24
+          maly-bystrzak nonogram --size 10 --count 18
         """;
 
     public static bool TryParse(string[] args, out CliOptions? options, out string? error, out bool showHelp)
@@ -72,16 +82,24 @@ internal sealed record CliOptions(
             return true;
 
         var command = args.Length == 0 ? string.Empty : args[0].ToLowerInvariant();
-        if (command is not "generate" and not "kakuro" and not "mixed")
+        if (command is not "generate" and not "kakuro" and not "maze" and not "nonogram" and not "mixed")
         {
-            error = "Brak polecenia. Użyj: generate, kakuro albo mixed.";
+            error = "Brak polecenia. Użyj: generate, kakuro, maze, nonogram albo mixed.";
             return false;
         }
-        var kind = command switch { "kakuro" => PuzzleKind.Kakuro, "mixed" => PuzzleKind.Mixed, _ => PuzzleKind.Sudoku };
+        var kind = command switch
+        {
+            "kakuro" => PuzzleKind.Kakuro,
+            "maze" => PuzzleKind.Maze,
+            "nonogram" => PuzzleKind.Nonogram,
+            "mixed" => PuzzleKind.Mixed,
+            _ => PuzzleKind.Sudoku
+        };
 
         var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var overwrite = false;
         var relativeStars = false;
+        var includeSolutions = false;
         var knownValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "--output", "--count", "--size", "--title", "--subtitle", "--child-name", "--seed", "--types",
@@ -99,6 +117,11 @@ internal sealed record CliOptions(
             if (argument.Equals("--relative-stars", StringComparison.OrdinalIgnoreCase))
             {
                 relativeStars = true;
+                continue;
+            }
+            if (argument.Equals("--include-solutions", StringComparison.OrdinalIgnoreCase))
+            {
+                includeSolutions = true;
                 continue;
             }
             if (!knownValues.Contains(argument))
@@ -128,6 +151,8 @@ internal sealed record CliOptions(
         var defaultTitle = kind switch
         {
             PuzzleKind.Kakuro => "Moja książeczka Kakuro",
+            PuzzleKind.Maze => "Moja książeczka labiryntów",
+            PuzzleKind.Nonogram => "Moja książeczka nonogramów",
             PuzzleKind.Mixed => "Moja książeczka łamigłówek",
             _ => "Moja książeczka Sudoku"
         };
@@ -141,7 +166,7 @@ internal sealed record CliOptions(
         }
 
         options = new CliOptions(kind, Path.GetFullPath(output), count, size, title.Trim(), subtitle.Trim(),
-            string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(), seed, overwrite, types,
+            string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(), seed, overwrite, includeSolutions, types,
             scoreMinimum, scoreMaximum, relativeStars);
         return true;
     }
@@ -182,6 +207,20 @@ internal sealed record CliOptions(
             error = "Dla Kakuro wartość --size musi wynosić 3 albo 4.";
             return false;
         }
+        if (kind == PuzzleKind.Maze)
+        {
+            if (!TryInt(values, "--size", 9, out size, out error)) return false;
+            if (size is 9 or 15) return true;
+            error = "Dla labiryntów wartość --size musi wynosić 9 albo 15.";
+            return false;
+        }
+        if (kind == PuzzleKind.Nonogram)
+        {
+            if (!TryInt(values, "--size", 5, out size, out error)) return false;
+            if (size is 5 or 7 or 10) return true;
+            error = "Dla nonogramów wartość --size musi wynosić 5, 7 albo 10.";
+            return false;
+        }
         if (!TryInt(values, "--size", 4, out size, out error))
             return false;
         if (size is 4 or 6)
@@ -206,7 +245,7 @@ internal sealed record CliOptions(
             return true;
         }
 
-        var text = Get(values, "--types", "sudoku4,sudoku6,kakuro3,kakuro4");
+        var text = Get(values, "--types", "sudoku4,sudoku6,kakuro3,kakuro4,maze9,maze15,nonogram5,nonogram7,nonogram10");
         var parsed = new List<PuzzleType>();
         foreach (var item in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
@@ -216,12 +255,17 @@ internal sealed record CliOptions(
                 "sudoku6" or "sudoku6x6" => PuzzleType.Sudoku6,
                 "kakuro" or "kakuro3" or "kakuro3x3" => PuzzleType.Kakuro3,
                 "kakuro4" or "kakuro4x4" => PuzzleType.Kakuro4,
+                "maze9" or "maze9x9" => PuzzleType.Maze9,
+                "maze15" or "maze15x15" => PuzzleType.Maze15,
+                "nonogram5" or "nonogram5x5" => PuzzleType.Nonogram5,
+                "nonogram7" or "nonogram7x7" => PuzzleType.Nonogram7,
+                "nonogram10" or "nonogram10x10" => PuzzleType.Nonogram10,
                 _ => (PuzzleType?)null
             };
             if (type is null)
             {
                 types = Array.Empty<PuzzleType>();
-                error = $"Nieznany typ zadania: {item}. Dostępne: sudoku4, sudoku6, kakuro3, kakuro4.";
+                error = $"Nieznany typ zadania: {item}. Dostępne: sudoku4, sudoku6, kakuro3, kakuro4, maze9, maze15, nonogram5, nonogram7, nonogram10.";
                 return false;
             }
             if (!parsed.Contains(type.Value))
