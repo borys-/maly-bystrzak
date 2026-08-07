@@ -13,8 +13,9 @@ public sealed class NonogramModule : IWorksheetModule
     public string Symbol => "▦";
     public WorksheetInstruction Instruction => ModuleInstruction;
     public IReadOnlyList<WorksheetVariant> Variants { get; } =
-    [new("5x5", "Nonogram 5 × 5", "Małe ukryte obrazki"), new("7x7", "Nonogram 7 × 7", "Więcej grup i szczegółów"),
-     new("10x10", "Nonogram 10 × 10", "Najbardziej wymagające obrazki")];
+    [new("5x5", "Nonogram 5 × 5", "Małe ukryte obrazki"),
+     new("7x7", "Nonogram 7 × 7", "Więcej grup i szczegółów", WorksheetLayout.Large),
+     new("10x10", "Nonogram 10 × 10", "Najbardziej wymagające obrazki", WorksheetLayout.Large)];
 
     public IReadOnlyList<string> Validate(ModuleGenerationRequest request)
     {

@@ -1,12 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mały Bystrzak — generator książeczek dla dzieci</title>
-    <meta name="description" content="Twórz kolorowe książeczki Sudoku i Kakuro dla dzieci. Gotowe PDF-y powstają lokalnie w przeglądarce." />
+    <title>Łamigłówki dla dzieci do druku – generator PDF | Mały Bystrzak</title>
+    <meta name="description" content="Twórz bezpłatne książeczki z Sudoku, Kakuro, labiryntami i nonogramami dla dzieci. Wybierz poziom, wygeneruj PDF i wydrukuj gotowe karty pracy." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="application-name" content="Mały Bystrzak" />
     <meta name="theme-color" content="#25316d" />
+    <link rel="canonical" href="https://borys-.github.io/maly-bystrzak/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pl_PL" />
+    <meta property="og:site_name" content="Mały Bystrzak" />
+    <meta property="og:title" content="Łamigłówki dla dzieci do druku – generator PDF" />
+    <meta property="og:description" content="Bezpłatny generator książeczek z Sudoku, Kakuro, labiryntami i nonogramami. Gotowe karty pracy pobierzesz jako PDF." />
+    <meta property="og:url" content="https://borys-.github.io/maly-bystrzak/" />
+    <meta property="og:image" content="https://borys-.github.io/maly-bystrzak/og-maly-bystrzak.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kolorowa książeczka z Sudoku, labiryntami i nonogramami dla dzieci" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Łamigłówki dla dzieci do druku – generator PDF" />
+    <meta name="twitter:description" content="Twórz bezpłatne książeczki z łamigłówkami i pobieraj gotowe karty pracy jako PDF." />
+    <meta name="twitter:image" content="https://borys-.github.io/maly-bystrzak/og-maly-bystrzak.png" />
+    <meta name="twitter:image:alt" content="Kolorowa książeczka z łamigłówkami dla dzieci" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://borys-.github.io/maly-bystrzak/#application",
+          "name": "Mały Bystrzak",
+          "url": "https://borys-.github.io/maly-bystrzak/",
+          "description": "Bezpłatny generator książeczek i kart pracy z Sudoku, Kakuro, labiryntami i nonogramami dla dzieci.",
+          "applicationCategory": "EducationalApplication",
+          "applicationSubCategory": "Generator kart pracy dla dzieci",
+          "operatingSystem": "Dowolny system z nowoczesną przeglądarką",
+          "browserRequirements": "Wymaga JavaScript",
+          "inLanguage": "pl-PL",
+          "isAccessibleForFree": true,
+          "image": "https://borys-.github.io/maly-bystrzak/og-maly-bystrzak.png",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "PLN"
+          },
+          "featureList": [
+            "Sudoku 4×4 i 6×6",
+            "Kakuro 3×3 i 4×4",
+            "Labirynty 9×9 i 15×15",
+            "Nonogramy 5×5, 7×7 i 10×10",
+            "Eksport książeczki i rozwiązań do PDF",
+            "Działanie lokalne bez zakładania konta"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://borys-.github.io/maly-bystrzak/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Czy generator Mały Bystrzak jest bezpłatny?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Tak. Generator jest bezpłatny i nie wymaga zakładania konta."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Czy dane dziecka są wysyłane na serwer?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nie. Książeczki i zapisane projekty powstają lokalnie w przeglądarce użytkownika."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Jakie zadania można dodać do książeczki?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Do wyboru są Sudoku, Kakuro, labirynty i nonogramy w kilku rozmiarach oraz osobna sekcja rozwiązań."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
     <base href="/" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/svg+xml" href="brand-icon.svg" />
@@ -19,15 +104,27 @@
 
 <body>
     <div id="app">
-        <div class="app-loading" role="status" aria-live="polite">
-            <div class="loading-card">
+        <main class="seo-shell">
+            <section class="seo-shell-hero" aria-labelledby="seo-shell-title">
                 <span class="loading-mark" aria-hidden="true">MB</span>
-                <strong>Mały Bystrzak</strong>
-                <p>Przygotowuję generator książeczek</p>
-                <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            </div>
-        </div>
+                <div>
+                    <span class="eyebrow">BEZPŁATNY GENERATOR PDF</span>
+                    <h1 id="seo-shell-title">Stwórz łamigłówki dla dzieci do druku</h1>
+                    <p>Przygotuj książeczkę z Sudoku, Kakuro, labiryntami i nonogramami. Wybierz zadania i poziom trudności, a następnie pobierz gotowe karty pracy w PDF.</p>
+                    <a href="#generator">Uruchom generator książeczki</a>
+                </div>
+            </section>
+            <section class="seo-shell-features" aria-label="Możliwości generatora">
+                <article><strong>Sudoku i Kakuro</strong><span>Zadania liczbowe w kilku rozmiarach.</span></article>
+                <article><strong>Labirynty i nonogramy</strong><span>Ćwiczenia spostrzegawczości i logicznego myślenia.</span></article>
+                <article><strong>Gotowy wydruk PDF</strong><span>Książeczka, rozwiązania i oszczędny tryb czarno-biały.</span></article>
+                <article><strong>Prywatnie i bez konta</strong><span>Wszystko powstaje lokalnie w Twojej przeglądarce.</span></article>
+            </section>
+            <p class="seo-shell-loading" role="status" aria-live="polite">Przygotowuję interaktywny generator…</p>
+        </main>
     </div>
+
+    <noscript><p class="noscript-note">Do uruchomienia generatora PDF potrzebna jest obsługa JavaScript. Informacje o dostępnych zadaniach pozostają widoczne powyżej.</p></noscript>
 
     <div id="blazor-error-ui">
         Wystąpił nieoczekiwany błąd.

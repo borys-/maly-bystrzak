@@ -8,13 +8,13 @@
 @inject IProjectStore ProjectStore
 @inject IJSRuntime JS
 
-<PageTitle>Mały Bystrzak — generator książeczek dla dzieci</PageTitle>
+<PageTitle>Łamigłówki dla dzieci do druku – generator PDF | Mały Bystrzak</PageTitle>
 
 <section class="hero">
     <div class="hero-copy">
         <span class="eyebrow">NAUKA, KTÓRA TRAFIA NA PAPIER</span>
-        <h1>Ułóż wyjątkową książeczkę<br /><em>dla małego bystrzaka.</em></h1>
-        <p>Wybierz zadania, dopasuj poziom i pobierz gotowy PDF. Bez konta, bez wysyłania danych — także offline.</p>
+        <h1>Stwórz łamigłówki dla dzieci<br /><em>do druku w PDF.</em></h1>
+        <p>Ułóż bezpłatną książeczkę z Sudoku, Kakuro, labiryntami i nonogramami. Wybierz poziom i pobierz gotowe karty pracy — bez konta i wysyłania danych.</p>
         <div class="hero-pills" aria-label="Najważniejsze możliwości">
             <span>Sudoku i Kakuro</span><span>Labirynty</span><span>Nonogramy 5×5–10×10</span><span>Gotowa broszura A4</span>
         </div>
@@ -55,22 +55,45 @@
             <fieldset>
                 <legend><b>2</b> Dopasuj książeczkę</legend>
                 <div class="form-grid">
-                    <label><span>Tytuł</span><input maxlength="70" @bind="title" /></label>
-                    <label><span>Imię dziecka <small>(opcjonalnie)</small></span><input maxlength="40" @bind="childName" placeholder="np. Zosia" /></label>
-                    <label class="wide"><span>Podtytuł</span><input maxlength="100" @bind="subtitle" /></label>
-                    <label><span>Liczba zadań</span><input type="number" min="1" max="180" @bind="count" /></label>
-                    <label><span>Ziarno zestawu</span><span class="input-action"><input type="number" @bind="seed" /><button type="button" @onclick="RandomizeSeed" title="Wylosuj ziarno">↻</button></span></label>
+                    <label><span>Tytuł</span><input maxlength="70" @bind="title" @bind:event="oninput" /></label>
+                    <label><span>Imię dziecka <small>(opcjonalnie)</small></span><input maxlength="40" @bind="childName" @bind:event="oninput" placeholder="np. Zosia" /></label>
+                    <label class="wide"><span>Podtytuł</span><input maxlength="100" @bind="subtitle" @bind:event="oninput" /></label>
+                    <label><span>Liczba zadań</span><input type="number" min="1" max="180" @bind="count" @bind:event="oninput" /></label>
+                    <label><span>Ziarno zestawu</span><span class="input-action"><input type="number" @bind="seed" @bind:event="oninput" /><button type="button" @onclick="RandomizeSeed" title="Wylosuj ziarno">↻</button></span></label>
                 </div>
+                @if (ConfigurationLayoutAdvice is { } advice)
+                {
+                    <div class="layout-advice" data-testid="layout-advice">
+                        <span class="layout-advice-icon" aria-hidden="true">◇</span>
+                        <div>
+                            <p><strong>W książeczce zostanie sporo wolnego miejsca.</strong> Szacowane wykorzystanie stron: @advice.Estimate.UtilizationPercentage%.</p>
+                            <span class="layout-usage" aria-hidden="true"><i style="width:@advice.Estimate.UtilizationPercentage%"></i></span>
+                            @if (advice.SuggestedCount is { } suggestedCount)
+                            {
+                                <small>Ustaw @suggestedCount zadań, aby zapełnić całe strony.</small>
+                            }
+                            else
+                            {
+                                <small>Duże zadanie zajmuje 4 z 6 pól strony i potrzebuje obok dwóch małych. Zaznacz jeszcze co najmniej @advice.MissingSmallVariants @(advice.MissingSmallVariants == 1 ? "mały wariant" : "małe warianty") albo wybierz mniej dużych.</small>
+                            }
+                        </div>
+                        @if (advice.SuggestedCount is { } targetCount)
+                        {
+                            <button type="button" data-testid="apply-layout-suggestion" @onclick="() => count = targetCount">Ustaw @targetCount</button>
+                        }
+                    </div>
+                }
                 <label class="toggle-row"><input type="checkbox" @bind="personalized" /><span><strong>Personalizuj zakres trudności</strong><small>Wynik 0–100 jest percentylem porównywalnym między rodzajami zadań.</small></span></label>
                 @if (personalized)
                 {
                     <div class="range-row">
-                        <label><span>Od</span><input type="number" min="0" max="99" @bind="scoreMin" /></label>
+                        <label><span>Od</span><input type="number" min="0" max="99" @bind="scoreMin" @bind:event="oninput" /></label>
                         <span>—</span>
-                        <label><span>Do</span><input type="number" min="1" max="100" @bind="scoreMax" /></label>
+                        <label><span>Do</span><input type="number" min="1" max="100" @bind="scoreMax" @bind:event="oninput" /></label>
                     </div>
                 }
                 <label class="toggle-row"><input type="checkbox" @bind="includeSolutions" /><span><strong>Dołącz rozwiązania</strong><small>Odpowiedzi znajdą się w osobnej sekcji na końcu.</small></span></label>
+                <label class="toggle-row"><input data-testid="ink-saving-mode" type="checkbox" @bind="inkSavingMode" /><span><strong>Oszczędny druk czarno-biały</strong><small>PDF bez kolorowych wypełnień — czytelny i łagodniejszy dla tuszu.</small></span></label>
             </fieldset>
 
             @if (!string.IsNullOrWhiteSpace(error)) { <div class="alert error" role="alert">@error</div> }
@@ -86,6 +109,8 @@
             {
                 <button class="primary-button" type="submit" data-testid="generate"><span>Wygeneruj książeczkę</span><b>→</b></button>
             }
+            <button class="share-button" type="button" data-testid="share-configuration" @onclick="ShareConfigurationAsync">Skopiuj link do ustawień</button>
+            @if (book is null && !string.IsNullOrWhiteSpace(message)) { <div class="alert success" role="status">@message</div> }
         </form>
 
         <aside class="result-card" data-testid="@(book is null ? "empty-result" : "result")">
@@ -108,15 +133,29 @@
                         <button type="button" class="@(!showingSolutions ? "active" : null)" data-testid="preview-tasks" @onclick="() => showingSolutions = false">Zadania</button>
                         <button type="button" class="@(showingSolutions ? "active" : null)" data-testid="preview-solutions" @onclick="() => showingSolutions = true">Rozwiązania</button>
                     </div>
-                    <span data-testid="preview-page-label">Strona @(previewPage + 1) z @PreviewPageCount</span>
+                    <span class="preview-status">
+                        @if (inkSavingMode) { <b data-testid="monochrome-preview-label">CZARNO-BIAŁY</b> }
+                        <span data-testid="preview-page-label">Strona @(previewPage + 1) z @PreviewPageCount</span>
+                    </span>
                 </div>
-                <div class="preview-grid">
+                <div class="preview-grid @(inkSavingMode ? "ink-saving-preview" : null)">
                     @foreach (var placement in PreviewItems)
                     {
                         var item = placement.Worksheet;
                         <article class="preview-card @(item.Layout == WorksheetLayout.Large ? "large" : null)"
                                  style="grid-column:@(placement.Column + 1) / span @placement.ColumnSpan; grid-row:@(placement.Row + 1) / span @placement.RowSpan">
-                            <header><strong>Nr @item.Number</strong><span>@item.TypeName</span></header>
+                            <header>
+                                <strong>Nr @item.Number</strong><span>@item.TypeName</span>
+                                <span class="worksheet-actions">
+                                    <button type="button" title="Przesuń wcześniej" aria-label="Przesuń zadanie @item.Number wcześniej"
+                                            disabled="@(item.Number == 1 || regeneratingWorksheet is not null)" @onclick="() => MoveWorksheet(item.Number, -1)">↑</button>
+                                    <button type="button" title="Przesuń później" aria-label="Przesuń zadanie @item.Number później"
+                                            disabled="@(item.Number == book.Worksheets.Count || regeneratingWorksheet is not null)" @onclick="() => MoveWorksheet(item.Number, 1)">↓</button>
+                                    <button type="button" class="regenerate-button" data-testid="regenerate-worksheet" title="Wylosuj nowe zadanie"
+                                            aria-label="Regeneruj zadanie @item.Number" disabled="@(regeneratingWorksheet is not null)"
+                                            @onclick="() => RegenerateWorksheetAsync(item.Number)">@(regeneratingWorksheet == item.Number ? "…" : "↻")</button>
+                                </span>
+                            </header>
                             <WorksheetPreview Visual="@(showingSolutions ? item.Solution : item.Task)"
                                               Label="@($"{(showingSolutions ? "Rozwiązanie" : "Zadanie")} {item.Number} — {item.TypeName}")" />
                             <footer><span class="difficulty-dots">@Dots(item.DisplayStars)</span><small>@item.Difficulty.Score/100</small></footer>
@@ -127,6 +166,14 @@
                     <button type="button" data-testid="preview-previous" disabled="@(previewPage == 0)" @onclick="PreviousPreviewPage">← Poprzednia</button>
                     <button type="button" data-testid="preview-next" disabled="@(previewPage + 1 >= PreviewPageCount)" @onclick="NextPreviewPage">Następna →</button>
                 </div>
+                @if (SuggestedFullPageCount is { } suggestedCount)
+                {
+                    <div class="page-fill-hint" data-testid="page-fill-hint">
+                        <span aria-hidden="true">▦</span>
+                        <p><strong>W broszurce zostało wolne miejsce.</strong> Możesz zwiększyć liczbę zadań do @suggestedCount bez dodawania kolejnych kartek.</p>
+                        <button type="button" @onclick="() => ApplySuggestedCount(suggestedCount)">Ustaw @suggestedCount</button>
+                    </div>
+                }
                 <div class="download-stack">
                     <button class="primary-button" data-testid="download-booklet" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
                     <div class="secondary-actions">
@@ -149,6 +196,32 @@
                 @if (!string.IsNullOrWhiteSpace(message)) { <div class="alert success" role="status">@message</div> }
             }
         </aside>
+    </div>
+</section>
+
+<section class="seo-info-section" id="o-generatorze" aria-labelledby="seo-info-title">
+    <div class="seo-info-heading">
+        <span class="step-label">NAUKA PRZEZ ZABAWĘ</span>
+        <h2 id="seo-info-title">Karty pracy dla rodziców i nauczycieli</h2>
+        <p>Mały Bystrzak pomaga szybko przygotować łamigłówki dla dzieci do druku. Każdą książeczkę możesz dopasować, zapisać i pobrać jako czytelny PDF.</p>
+    </div>
+    <div class="puzzle-info-grid">
+        <article><span>#</span><h3>Sudoku</h3><p>Plansze 4×4 i 6×6 uczą dostrzegania zależności oraz spokojnego rozwiązywania problemów.</p></article>
+        <article><span>+</span><h3>Kakuro</h3><p>Proste zadania z sumami łączą logiczne myślenie z ćwiczeniem podstawowych obliczeń.</p></article>
+        <article><span>↝</span><h3>Labirynty</h3><p>Trasy 9×9 i 15×15 wspierają koncentrację, planowanie i spostrzegawczość.</p></article>
+        <article><span>▦</span><h3>Nonogramy</h3><p>Obrazki 5×5, 7×7 i 10×10 pozwalają stopniowo zwiększać poziom wyzwania.</p></article>
+    </div>
+    <div class="audience-info-grid">
+        <article><h3>Do nauki w domu</h3><p>Rodzice mogą przygotować spersonalizowaną książeczkę na spokojne popołudnie, podróż lub dodatkowe ćwiczenia.</p></article>
+        <article><h3>Na zajęcia i do świetlicy</h3><p>Nauczyciele otrzymują gotowe karty pracy z odpowiedziami, które można wydrukować w kolorze albo w oszczędnym trybie czarno-białym.</p></article>
+    </div>
+    <div class="faq-section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Najczęstsze pytania</h2>
+        <div class="faq-grid">
+            <article><h3>Czy generator Mały Bystrzak jest bezpłatny?</h3><p>Tak. Generator jest bezpłatny i nie wymaga zakładania konta.</p></article>
+            <article><h3>Czy dane dziecka są wysyłane na serwer?</h3><p>Nie. Książeczki i zapisane projekty powstają lokalnie w przeglądarce użytkownika.</p></article>
+            <article><h3>Jakie zadania można dodać do książeczki?</h3><p>Do wyboru są Sudoku, Kakuro, labirynty i nonogramy w kilku rozmiarach oraz osobna sekcja rozwiązań.</p></article>
+        </div>
     </div>
 </section>
 
@@ -245,11 +318,14 @@
     private int scoreMin = 20;
     private int scoreMax = 80;
     private bool includeSolutions;
+    private bool inkSavingMode;
     private bool showingSolutions;
     private bool showingDifficultyReport;
     private int previewPage;
     private bool isGenerating;
     private bool isExporting;
+    private int? regeneratingWorksheet;
+    private readonly Dictionary<int, int> regenerationRounds = [];
     private int progressPercent;
     private string progressMessage = "Przygotowuję zadania…";
     private int exportProgressPercent;
@@ -262,9 +338,10 @@
     {
         foreach (var module in Registry.All)
         foreach (var variant in module.Variants)
-            choices.Add(new(module.Id, variant.Id, variant.DisplayName, variant.Description, module.Symbol,
+            choices.Add(new(module.Id, variant.Id, variant.DisplayName, variant.Description, module.Symbol, variant.Layout,
                 module.Id == "sudoku" && variant.Id == "4x4"));
         await RestorePreferencesAsync();
+        await RestoreSharedConfigurationAsync();
         await RefreshProjectsAsync();
     }
 
@@ -288,7 +365,7 @@
         try
         {
             var settings = new BookGenerationSettings(title.Trim(), subtitle.Trim(), string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(),
-                count, seed, selections, personalized ? scoreMin : null, personalized ? scoreMax : null, personalized, includeSolutions);
+                count, seed, selections, personalized ? scoreMin : null, personalized ? scoreMax : null, personalized, includeSolutions, inkSavingMode);
             var progress = new ImmediateProgress<GenerationProgress>(value =>
             {
                 progressPercent = value.Percentage;
@@ -300,6 +377,7 @@
             previewPage = 0;
             showingSolutions = false;
             showingDifficultyReport = false;
+            regenerationRounds.Clear();
             projectName = string.IsNullOrWhiteSpace(childName) ? title : $"{title} — {childName}";
             await JS.InvokeVoidAsync("malyBystrzak.setPreference", "last-settings", JsonSerializer.Serialize(settings));
         }
@@ -315,6 +393,86 @@
         previewPages.Count == 0 ? [] : previewPages[Math.Min(previewPage, previewPages.Count - 1)];
     private void PreviousPreviewPage() => previewPage = Math.Max(0, previewPage - 1);
     private void NextPreviewPage() => previewPage = Math.Min(PreviewPageCount - 1, previewPage + 1);
+    private LayoutAdvice? ConfigurationLayoutAdvice
+    {
+        get
+        {
+            if (count is < 1 or > 180) return null;
+            var selected = choices.Where(choice => choice.Selected).ToArray();
+            if (selected.Length == 0) return null;
+            var cycle = selected.Select(choice => choice.Layout).ToArray();
+            var estimate = BookLayout.EstimateWorksheetPages(count, cycle);
+            if (estimate.FreeSlots == 0) return null;
+            var suggestedCount = BookLayout.FindNextFullPageCount(count, cycle);
+            var largeVariants = selected.Count(choice => choice.Layout == WorksheetLayout.Large);
+            var smallVariants = selected.Length - largeVariants;
+            var missingSmallVariants = Math.Max(1, largeVariants * 2 - smallVariants);
+            return new(estimate, suggestedCount, missingSmallVariants);
+        }
+    }
+    private int? SuggestedFullPageCount
+    {
+        get
+        {
+            if (book is null || previewPages.Count == 0) return null;
+            var cycle = book.Settings.Selections.Select(selection => book.Worksheets.First(item =>
+                item.ModuleId == selection.ModuleId && item.VariantId == selection.VariantId).Layout).ToArray();
+            var documentPageCount = book.CreateDocument().Pages.Count;
+            var worksheetSections = book.Settings.IncludeSolutions ? 2 : 1;
+            var availableWorksheetPages = (documentPageCount - 2) / worksheetSections;
+            return BookLayout.FindCountToFillWorksheetPages(book.Worksheets.Count, cycle, availableWorksheetPages);
+        }
+    }
+
+    private async Task ApplySuggestedCount(int suggestedCount)
+    {
+        count = suggestedCount;
+        message = $"Ustawiono {suggestedCount} zadań. Wygeneruj książeczkę ponownie, aby zapełnić strony.";
+        await JS.InvokeVoidAsync("scrollTo", new { top = 520, behavior = "smooth" });
+    }
+
+    private void MoveWorksheet(int worksheetNumber, int offset)
+    {
+        if (book is null) return;
+        var worksheets = book.Worksheets.OrderBy(item => item.Number).ToList();
+        var source = worksheets.FindIndex(item => item.Number == worksheetNumber);
+        var destination = source + offset;
+        if (source < 0 || destination < 0 || destination >= worksheets.Count) return;
+        (worksheets[source], worksheets[destination]) = (worksheets[destination], worksheets[source]);
+        worksheets = worksheets.Select((item, index) => item with { Number = index + 1 }).ToList();
+        book = book with { Worksheets = worksheets };
+        regenerationRounds.Clear();
+        RebuildPreview(worksheetNumber + offset);
+        message = "Kolejność zadań została zmieniona.";
+    }
+
+    private async Task RegenerateWorksheetAsync(int worksheetNumber)
+    {
+        if (book is null || regeneratingWorksheet is not null) return;
+        regeneratingWorksheet = worksheetNumber;
+        error = message = null;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(16);
+        try
+        {
+            var round = regenerationRounds.GetValueOrDefault(worksheetNumber) + 1;
+            book = Generator.RegenerateWorksheet(book, worksheetNumber, round);
+            regenerationRounds[worksheetNumber] = round;
+            RebuildPreview(worksheetNumber);
+            message = $"Zadanie nr {worksheetNumber} zostało wygenerowane ponownie.";
+        }
+        catch (Exception exception) { error = exception.Message; }
+        finally { regeneratingWorksheet = null; }
+    }
+
+    private void RebuildPreview(int worksheetNumber)
+    {
+        if (book is null) return;
+        previewPages = BookLayout.PackWorksheets(book.Worksheets);
+        var page = previewPages.Select((items, index) => new { items, index })
+            .FirstOrDefault(entry => entry.items.Any(item => item.Worksheet.Number == worksheetNumber));
+        if (page is not null) previewPage = page.index;
+    }
     private void OpenDifficultyReport() => showingDifficultyReport = true;
     private void CloseDifficultyReport() => showingDifficultyReport = false;
     private int DifficultyAverage => book is null ? 0 : (int)Math.Round(book.Worksheets.Average(item => item.Difficulty.Score));
@@ -396,6 +554,49 @@
         catch (JsonException) { }
     }
 
+    private async Task RestoreSharedConfigurationAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("malyBystrzak.getSharedConfiguration");
+            if (!string.IsNullOrWhiteSpace(json) && JsonSerializer.Deserialize<BookGenerationSettings>(json) is { } settings &&
+                IsValidSharedSettings(settings))
+            {
+                ApplySettings(settings);
+                message = "Ustawienia z udostępnionego linku są gotowe do użycia.";
+            }
+            else if (!string.IsNullOrWhiteSpace(json))
+            {
+                error = "Link z ustawieniami jest nieprawidłowy lub nieaktualny.";
+            }
+        }
+        catch (Exception exception) when (exception is JsonException or FormatException or JSException)
+        {
+            error = "Link z ustawieniami jest nieprawidłowy lub nieaktualny.";
+        }
+    }
+
+    private async Task ShareConfigurationAsync()
+    {
+        error = message = null;
+        var selections = choices.Where(choice => choice.Selected)
+            .Select(choice => new ModuleSelection(choice.ModuleId, choice.VariantId)).ToArray();
+        if (selections.Length == 0) { error = "Wybierz co najmniej jeden rodzaj zadania."; return; }
+        var settings = new BookGenerationSettings(title.Trim(), subtitle.Trim(), string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(),
+            count, seed, selections, personalized ? scoreMin : null, personalized ? scoreMax : null, personalized, includeSolutions, inkSavingMode);
+        if (!IsValidSharedSettings(settings)) { error = "Popraw ustawienia książeczki przed skopiowaniem linku."; return; }
+        var copied = await JS.InvokeAsync<bool>("malyBystrzak.copyConfigurationLink", JsonSerializer.Serialize(settings));
+        message = copied ? "Link do konfiguracji został skopiowany." : "Nie udało się skopiować linku.";
+    }
+
+    private bool IsValidSharedSettings(BookGenerationSettings settings) =>
+        !string.IsNullOrWhiteSpace(settings.Title) && !string.IsNullOrWhiteSpace(settings.Subtitle) &&
+        settings.Count is >= 1 and <= 180 && settings.Selections is { Count: > 0 } &&
+        settings.Selections.All(selection => Registry.All.Any(module =>
+            module.Id == selection.ModuleId && module.Variants.Any(variant => variant.Id == selection.VariantId))) &&
+        (!settings.RelativeStars || settings.Count >= 5 && settings.ScoreMinimum is >= 0 and < 100 &&
+            settings.ScoreMaximum is > 0 and <= 100 && settings.ScoreMinimum < settings.ScoreMaximum);
+
     private void ApplySettings(BookGenerationSettings settings, bool restoreSeed = true)
     {
         title = settings.Title; subtitle = settings.Subtitle; childName = settings.ChildName;
@@ -404,19 +605,24 @@
         personalized = settings.RelativeStars;
         scoreMin = settings.ScoreMinimum ?? 20; scoreMax = settings.ScoreMaximum ?? 80;
         includeSolutions = settings.IncludeSolutions;
+        inkSavingMode = settings.InkSavingMode;
         foreach (var choice in choices)
             choice.Selected = settings.Selections.Contains(new(choice.ModuleId, choice.VariantId));
     }
 
     private static string Dots(int count) => new('●', count);
 
-    private sealed class VariantChoice(string moduleId, string variantId, string name, string description, string symbol, bool selected)
+    private sealed record LayoutAdvice(WorksheetPageEstimate Estimate, int? SuggestedCount, int MissingSmallVariants);
+
+    private sealed class VariantChoice(string moduleId, string variantId, string name, string description, string symbol,
+        WorksheetLayout layout, bool selected)
     {
         public string ModuleId { get; } = moduleId;
         public string VariantId { get; } = variantId;
         public string Name { get; } = name;
         public string Description { get; } = description;
         public string Symbol { get; } = symbol;
+        public WorksheetLayout Layout { get; } = layout;
         public bool Selected { get; set; } = selected;
     }
 

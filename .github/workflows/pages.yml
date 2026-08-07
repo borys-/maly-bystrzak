@@ -22,10 +22,10 @@ jobs:
       - name: Pobierz repozytorium
         uses: actions/checkout@v7
 
-      - name: Zainstaluj .NET 8
+      - name: Zainstaluj .NET 10
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Przywróć zależności
         run: dotnet restore MalyBystrzak.sln
@@ -51,6 +51,21 @@ jobs:
           (Get-Content $index -Raw).Replace('<base href="/" />', '<base href="/maly-bystrzak/" />') | Set-Content $index -NoNewline
           Copy-Item $index "publish/wwwroot/404.html"
           New-Item "publish/wwwroot/.nojekyll" -ItemType File
+
+      - name: Zweryfikuj pliki SEO artefaktu
+        shell: pwsh
+        run: |
+          $root = "publish/wwwroot"
+          $required = @("index.html", "404.html", "robots.txt", "sitemap.xml", "og-maly-bystrzak.png")
+          foreach ($file in $required) {
+            if (-not (Test-Path (Join-Path $root $file))) { throw "Brakuje pliku SEO: $file" }
+          }
+          $index = Get-Content (Join-Path $root "index.html") -Raw
+          if (-not $index.Contains('<html lang="pl">')) { throw "Nie ustawiono języka polskiego." }
+          if (-not $index.Contains('rel="canonical" href="https://borys-.github.io/maly-bystrzak/"')) { throw "Brakuje canonicala." }
+          if (-not $index.Contains('property="og:image"')) { throw "Brakuje obrazu Open Graph." }
+          if (-not $index.Contains('application/ld+json')) { throw "Brakuje danych strukturalnych JSON-LD." }
+          if (-not $index.Contains('<base href="/maly-bystrzak/" />')) { throw "Niepoprawna ścieżka bazowa GitHub Pages." }
 
       - name: Przekaż artefakt GitHub Pages
         uses: actions/upload-pages-artifact@v5

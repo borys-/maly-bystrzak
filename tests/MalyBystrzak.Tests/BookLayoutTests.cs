@@ -5,6 +5,43 @@ namespace MalyBystrzak.Tests;
 public class BookLayoutTests
 {
     [Theory]
+    [InlineData(12, 2, 12, 12, 100)]
+    [InlineData(7, 2, 7, 12, 58)]
+    public void EstimatesStandardWorksheetPageUsage(int count, int pages, int used, int capacity, int utilization)
+    {
+        var estimate = BookLayout.EstimateWorksheetPages(count, [WorksheetLayout.Standard]);
+        Assert.Equal((pages, used, capacity, utilization),
+            (estimate.PageCount, estimate.UsedSlots, estimate.CapacitySlots, estimate.UtilizationPercentage));
+    }
+
+    [Fact]
+    public void EstimatesUsageForOneSmallAndTwoLargeVariants()
+    {
+        var estimate = BookLayout.EstimateWorksheetPages(100,
+            [WorksheetLayout.Standard, WorksheetLayout.Large, WorksheetLayout.Large]);
+        Assert.Equal((66, 298, 396, 75),
+            (estimate.PageCount, estimate.UsedSlots, estimate.CapacitySlots, estimate.UtilizationPercentage));
+    }
+
+    [Fact]
+    public void FindsNextCountThatFillsEveryWorksheetPage()
+    {
+        Assert.Equal(12, BookLayout.FindNextFullPageCount(7, [WorksheetLayout.Standard]));
+        Assert.Equal(9, BookLayout.FindNextFullPageCount(6,
+            [WorksheetLayout.Large, WorksheetLayout.Standard, WorksheetLayout.Standard]));
+        Assert.Null(BookLayout.FindNextFullPageCount(4, [WorksheetLayout.Large], 20));
+    }
+
+    [Fact]
+    public void FindsCountThatUsesBlankBookletPagesWithoutAddingSheets()
+    {
+        Assert.Equal(36, BookLayout.FindCountToFillWorksheetPages(24, [WorksheetLayout.Standard], 6));
+        Assert.Equal(30, BookLayout.FindCountToFillWorksheetPages(24, [WorksheetLayout.Standard], 5));
+        Assert.Equal(12, BookLayout.FindCountToFillWorksheetPages(7, [WorksheetLayout.Standard], 2));
+        Assert.Null(BookLayout.FindCountToFillWorksheetPages(12, [WorksheetLayout.Standard], 2));
+    }
+
+    [Theory]
     [InlineData(60, false, 12, 10)]
     [InlineData(1, false, 4, 1)]
     [InlineData(7, false, 4, 2)]

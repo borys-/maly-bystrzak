@@ -3,7 +3,7 @@ namespace MalyBystrzak.Core;
 public sealed record BookGenerationSettings(
     string Title, string Subtitle, string? ChildName, int Count, int Seed,
     IReadOnlyList<ModuleSelection> Selections, int? ScoreMinimum = null, int? ScoreMaximum = null,
-    bool RelativeStars = false, bool IncludeSolutions = true);
+    bool RelativeStars = false, bool IncludeSolutions = true, bool InkSavingMode = false);
 
 public sealed record GeneratedBook(BookGenerationSettings Settings, IReadOnlyList<GeneratedWorksheet> Worksheets)
 {
@@ -41,6 +41,42 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
     public Task<GeneratedBook> GenerateAsync(BookGenerationSettings settings,
         IProgress<GenerationProgress>? progress = null, CancellationToken cancellationToken = default)
         => GenerateCoreAsync(settings, progress, cancellationToken, true);
+
+    public GeneratedBook RegenerateWorksheet(GeneratedBook book, int worksheetNumber, int regenerationRound = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var worksheets = book.Worksheets.ToList();
+        var index = worksheets.FindIndex(item => item.Number == worksheetNumber);
+        if (index < 0) throw new ArgumentOutOfRangeException(nameof(worksheetNumber));
+
+        var current = worksheets[index];
+        var selection = new ModuleSelection(current.ModuleId, current.VariantId);
+        var module = registry.GetRequired(selection.ModuleId);
+        var existingFingerprints = worksheets.Where((_, itemIndex) => itemIndex != index)
+            .Select(item => item.Fingerprint).ToHashSet(StringComparer.Ordinal);
+
+        GeneratedWorksheet? replacement = null;
+        for (var attempt = 0; attempt < 8 && replacement is null; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var round = Math.Max(1, regenerationRound) * 101 + worksheetNumber * 17 + attempt;
+            var candidateCount = book.Settings.RelativeStars ? 60 : 8;
+            var candidates = Calibrate(module.Generate(new(selection.VariantId, candidateCount,
+                DeriveSeed(book.Settings.Seed, selection, round)), null, cancellationToken));
+            replacement = candidates
+                .Where(item => !existingFingerprints.Contains(item.Fingerprint))
+                .Where(item => !book.Settings.RelativeStars ||
+                    item.Difficulty.Score >= book.Settings.ScoreMinimum && item.Difficulty.Score <= book.Settings.ScoreMaximum)
+                .OrderBy(item => Math.Abs(item.Difficulty.Score - current.Difficulty.Score))
+                .FirstOrDefault();
+        }
+
+        if (replacement is null)
+            throw new InvalidOperationException("Nie udało się znaleźć nowego, unikalnego zadania. Spróbuj ponownie.");
+
+        worksheets[index] = replacement with { Number = current.Number, DisplayStars = current.DisplayStars };
+        return book with { Worksheets = worksheets };
+    }
 
     private async Task<GeneratedBook> GenerateCoreAsync(BookGenerationSettings settings,
         IProgress<GenerationProgress>? progress, CancellationToken cancellationToken, bool cooperative)

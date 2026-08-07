@@ -2,7 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace MalyBystrzak.Core;
 
-public sealed record WorksheetVariant(string Id, string DisplayName, string Description);
+public sealed record WorksheetVariant(string Id, string DisplayName, string Description,
+    WorksheetLayout Layout = WorksheetLayout.Standard);
 public sealed record ModuleSelection(string ModuleId, string VariantId);
 public sealed record ModuleGenerationRequest(string VariantId, int Count, int Seed);
 

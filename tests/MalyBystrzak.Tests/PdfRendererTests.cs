@@ -97,6 +97,24 @@ public class PdfRendererTests
         Assert.Equal(2, pdf.PageCount);
     }
 
+    [Fact]
+    public void InkSavingModeProducesAValidMonochromeVariant()
+    {
+        var registry = new WorksheetModuleRegistry([new SudokuModule()]);
+        var generator = new BookGenerator(registry);
+        var colorBook = generator.Generate(new("Książeczka", "Łamigłówki", null, 6, 24680,
+            [new("sudoku", "4x4")], IncludeSolutions: true));
+        var monochromeBook = colorBook with { Settings = colorBook.Settings with { InkSavingMode = true } };
+        var renderer = new BookPdfRenderer();
+
+        var colorBytes = renderer.RenderPreview(colorBook.CreateDocument());
+        var monochromeBytes = renderer.RenderPreview(monochromeBook.CreateDocument());
+
+        Assert.False(colorBytes.SequenceEqual(monochromeBytes));
+        using var pdf = PdfReader.Open(new MemoryStream(monochromeBytes));
+        Assert.Equal(monochromeBook.CreateDocument().Pages.Count, pdf.PageCount);
+    }
+
     private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
     {
         public void Report(T value) => report(value);

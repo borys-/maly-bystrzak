@@ -9,7 +9,36 @@ window.malyBystrzak = {
     URL.revokeObjectURL(url);
   },
   getPreference: key => localStorage.getItem(`maly-bystrzak:${key}`),
-  setPreference: (key, value) => localStorage.setItem(`maly-bystrzak:${key}`, value)
+  setPreference: (key, value) => localStorage.setItem(`maly-bystrzak:${key}`, value),
+  getSharedConfiguration: () => {
+    const encoded = new URLSearchParams(location.search).get('book');
+    if (!encoded) return null;
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+      .padEnd(Math.ceil(encoded.length / 4) * 4, '=');
+    const bytes = Uint8Array.from(atob(base64), character => character.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  },
+  copyConfigurationLink: async json => {
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    bytes.forEach(value => binary += String.fromCharCode(value));
+    const encoded = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const link = `${location.origin}${location.pathname}?book=${encoded}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      return true;
+    } catch {
+      const input = document.createElement('textarea');
+      input.value = link;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.select();
+      const copied = document.execCommand('copy');
+      input.remove();
+      return copied;
+    }
+  }
 };
 
 window.malyBystrzakStore = (() => {

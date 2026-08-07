@@ -13,7 +13,8 @@ public sealed class MazeModule : IWorksheetModule
     public string Symbol => "↝";
     public WorksheetInstruction Instruction => ModuleInstruction;
     public IReadOnlyList<WorksheetVariant> Variants { get; } =
-    [new("9x9", "Labirynt 9 × 9", "Krótsze trasy i większe pola"), new("15x15", "Labirynt 15 × 15", "Dłuższe trasy i więcej zaułków")];
+    [new("9x9", "Labirynt 9 × 9", "Krótsze trasy i większe pola"),
+     new("15x15", "Labirynt 15 × 15", "Dłuższe trasy i więcej zaułków", WorksheetLayout.Large)];
 
     public IReadOnlyList<string> Validate(ModuleGenerationRequest request)
     {

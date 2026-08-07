@@ -1,6 +1,8 @@
 using Microsoft.Playwright;
-using Microsoft.Playwright.Xunit;
+using Microsoft.Playwright.Xunit.v3;
+using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Xunit;
 
@@ -8,13 +10,61 @@ namespace MalyBystrzak.Web.E2E;
 
 public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, IClassFixture<WebServerFixture>
 {
+    private const string SeoTitle = "Łamigłówki dla dzieci do druku – generator PDF | Mały Bystrzak";
+
+    [Fact]
+    public async Task StaticEntryPointContainsCompleteSeoFallbackAndAssets()
+    {
+        using var client = new HttpClient();
+        var html = await client.GetStringAsync(server.BaseUrl);
+
+        Assert.Contains("<html lang=\"pl\">", html, StringComparison.Ordinal);
+        Assert.Contains($"<title>{SeoTitle}</title>", html, StringComparison.Ordinal);
+        Assert.Contains("rel=\"canonical\" href=\"https://borys-.github.io/maly-bystrzak/\"", html, StringComparison.Ordinal);
+        Assert.Contains("property=\"og:image\"", html, StringComparison.Ordinal);
+        Assert.Contains("name=\"twitter:card\"", html, StringComparison.Ordinal);
+        Assert.Contains("<h1 id=\"seo-shell-title\">Stwórz łamigłówki dla dzieci do druku</h1>", html, StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(html, "<h1[\\s>]", RegexOptions.IgnoreCase));
+
+        var jsonLdMatch = Regex.Match(html,
+            "<script type=\"application/ld\\+json\">(?<json>.*?)</script>", RegexOptions.Singleline);
+        Assert.True(jsonLdMatch.Success);
+        using var jsonLd = JsonDocument.Parse(jsonLdMatch.Groups["json"].Value);
+        var graph = jsonLd.RootElement.GetProperty("@graph");
+        Assert.Contains(graph.EnumerateArray(), item => item.GetProperty("@type").GetString() == "WebApplication");
+        Assert.Contains(graph.EnumerateArray(), item => item.GetProperty("@type").GetString() == "FAQPage");
+
+        var robots = await client.GetStringAsync($"{server.BaseUrl}/robots.txt");
+        var sitemap = await client.GetStringAsync($"{server.BaseUrl}/sitemap.xml");
+        Assert.Contains("Sitemap: https://borys-.github.io/maly-bystrzak/sitemap.xml", robots);
+        Assert.Contains("<loc>https://borys-.github.io/maly-bystrzak/</loc>", sitemap);
+
+        using var manifest = JsonDocument.Parse(await client.GetStringAsync($"{server.BaseUrl}/manifest.webmanifest"));
+        Assert.Equal("pl-PL", manifest.RootElement.GetProperty("lang").GetString());
+        Assert.Contains("Sudoku", manifest.RootElement.GetProperty("description").GetString());
+
+        var image = await client.GetByteArrayAsync($"{server.BaseUrl}/og-maly-bystrzak.png");
+        Assert.True(image.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }));
+        Assert.Equal(1200, BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(16, 4)));
+        Assert.Equal(630, BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(20, 4)));
+    }
+
+    [Fact]
+    public async Task UnknownRouteIsPolishAndMarkedNoIndex()
+    {
+        await Page.GotoAsync($"{server.BaseUrl}/nie-ma-takiej-strony");
+        await Expect(Page).ToHaveTitleAsync("Nie znaleziono strony | Mały Bystrzak");
+        await Expect(Page.GetByText("Nie ma strony pod tym adresem.", new() { Exact = true })).ToBeVisibleAsync();
+        await Expect(Page.Locator("meta[name='robots'][content='noindex,nofollow']")).ToHaveCountAsync(1);
+    }
+
     [Fact]
     public async Task HomeShowsCompleteGenerator()
     {
         await Page.GotoAsync(server.BaseUrl);
-        await Expect(Page).ToHaveTitleAsync("Mały Bystrzak — generator książeczek dla dzieci");
+        await Expect(Page).ToHaveTitleAsync(SeoTitle);
         await Expect(Page.Locator("link[rel='icon'][href='brand-icon.svg']")).ToHaveCountAsync(1);
-        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ułóż wyjątkową książeczkę dla małego bystrzaka." })).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Stwórz łamigłówki dla dzieci do druku w PDF." })).ToBeVisibleAsync();
         var focusedHeadingOutline = await Page.EvaluateAsync<string>(
             "() => document.activeElement?.tagName === 'H1' ? getComputedStyle(document.activeElement).outlineStyle : 'unexpected-focus'");
         Assert.Equal("none", focusedHeadingOutline);
@@ -22,7 +72,25 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Expect(Page.GetByTestId("variant-maze-9x9")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("variant-nonogram-5x5")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Karty pracy dla rodziców i nauczycieli" })).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Najczęstsze pytania" })).ToBeVisibleAsync();
+        await Expect(Page.Locator("link[rel='canonical']")).ToHaveAttributeAsync("href", "https://borys-.github.io/maly-bystrzak/");
         await Expect(Page.GetByRole(AriaRole.Checkbox, new() { Name = "Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.", Exact = true })).Not.ToBeCheckedAsync();
+    }
+
+    [Fact]
+    public async Task WarnsAboutFreeSpaceBeforeGenerating()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.GetByTestId("variant-sudoku-4x4").ClickAsync();
+        foreach (var variant in new[] { "nonogram-5x5", "nonogram-7x7", "nonogram-10x10" })
+            await Page.GetByTestId($"variant-{variant}").ClickAsync();
+        await Page.GetByLabel("Liczba zadań").FillAsync("100");
+
+        var advice = Page.GetByTestId("layout-advice");
+        await Expect(advice).ToContainTextAsync("75%");
+        await Expect(advice).ToContainTextAsync("co najmniej 3 małe warianty");
+        await Expect(Page.GetByTestId("apply-layout-suggestion")).ToHaveCountAsync(0);
     }
 
     [Fact]
@@ -244,7 +312,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         {
             await Page.ReloadAsync();
             await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
-            await Expect(Page).ToHaveTitleAsync("Mały Bystrzak — generator książeczek dla dzieci");
+            await Expect(Page).ToHaveTitleAsync(SeoTitle);
         }
         finally
         {

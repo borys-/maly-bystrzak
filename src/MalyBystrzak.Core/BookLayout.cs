@@ -6,9 +6,72 @@ public sealed record BookPage(BookPageKind Kind, IReadOnlyList<WorksheetPlacemen
 public sealed record SheetSide(int LeftPage, int RightPage);
 public sealed record BookDocument(BookGenerationSettings Settings, IReadOnlyList<BookPage> Pages,
     IReadOnlyList<WorksheetInstruction> Instructions);
+public sealed record WorksheetPageEstimate(int PageCount, int UsedSlots, int CapacitySlots)
+{
+    public int FreeSlots => CapacitySlots - UsedSlots;
+    public int UtilizationPercentage => CapacitySlots == 0 ? 0 :
+        (int)Math.Round(UsedSlots * 100d / CapacitySlots);
+}
 
 public static class BookLayout
 {
+    public static WorksheetPageEstimate EstimateWorksheetPages(int count,
+        IReadOnlyList<WorksheetLayout> selectionCycle)
+    {
+        if (count <= 0 || selectionCycle.Count == 0) return new(0, 0, 0);
+        var large = Enumerable.Range(0, count)
+            .Count(index => selectionCycle[index % selectionCycle.Count] == WorksheetLayout.Large);
+        var standard = count - large;
+        var originalLarge = large;
+        var originalStandard = standard;
+        var pages = 0;
+        var pairedLarge = Math.Min(large, standard / 2);
+        pages += pairedLarge;
+        large -= pairedLarge;
+        standard -= pairedLarge * 2;
+        pages += standard / 6;
+        standard %= 6;
+        if (large > 0)
+        {
+            pages += large;
+            standard = 0;
+        }
+        if (standard > 0) pages++;
+        return new(pages, originalStandard + originalLarge * 4, pages * 6);
+    }
+
+    public static int? FindNextFullPageCount(int currentCount, IReadOnlyList<WorksheetLayout> selectionCycle,
+        int maximumCount = 180)
+    {
+        if (selectionCycle.Count == 0) return null;
+        for (var candidate = currentCount + 1; candidate <= maximumCount; candidate++)
+        {
+            var large = Enumerable.Range(0, candidate)
+                .Count(index => selectionCycle[index % selectionCycle.Count] == WorksheetLayout.Large);
+            var standard = candidate - large;
+            if (standard >= large * 2 && (standard - large * 2) % 6 == 0)
+                return candidate;
+        }
+        return null;
+    }
+
+    public static int? FindCountToFillWorksheetPages(int currentCount, IReadOnlyList<WorksheetLayout> selectionCycle,
+        int targetPageCount, int maximumCount = 180)
+    {
+        if (selectionCycle.Count == 0 || targetPageCount <= 0) return null;
+        for (var candidate = currentCount + 1; candidate <= maximumCount; candidate++)
+        {
+            var large = Enumerable.Range(0, candidate)
+                .Count(index => selectionCycle[index % selectionCycle.Count] == WorksheetLayout.Large);
+            var standard = candidate - large;
+            if (standard < large * 2 || (standard - large * 2) % 6 != 0) continue;
+            var pages = large + (standard - large * 2) / 6;
+            if (pages == targetPageCount) return candidate;
+            if (pages > targetPageCount) return null;
+        }
+        return null;
+    }
+
     public static IReadOnlyList<GeneratedWorksheet> ArrangeForFullPages(
         IReadOnlyList<GeneratedWorksheet> worksheets)
     {

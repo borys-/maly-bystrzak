@@ -37,7 +37,7 @@ Moduły zadań implementują `IWorksheetModule` i zwracają neutralny model wizu
 
 ## Uruchomienie lokalne
 
-Wymagany jest .NET SDK 8.
+Wymagany jest .NET SDK 10.
 
 ```powershell
 dotnet restore MalyBystrzak.sln
@@ -100,7 +100,7 @@ Testy przeglądarkowe samodzielnie uruchamiają lokalny serwer aplikacji:
 
 ```powershell
 dotnet build MalyBystrzak.sln -c Release
-pwsh tests/MalyBystrzak.Web.E2E/bin/Release/net8.0/playwright.ps1 install chromium
+pwsh tests/MalyBystrzak.Web.E2E/bin/Release/net10.0/playwright.ps1 install chromium
 dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
 ```
 

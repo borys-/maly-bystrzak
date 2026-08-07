@@ -4,9 +4,12 @@
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <PageTitle>Not found</PageTitle>
+        <PageTitle>Nie znaleziono strony | Mały Bystrzak</PageTitle>
+        <HeadContent>
+            <meta name="robots" content="noindex,nofollow" />
+        </HeadContent>
         <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <p role="alert">Nie ma strony pod tym adresem.</p>
         </LayoutView>
     </NotFound>
 </Router>

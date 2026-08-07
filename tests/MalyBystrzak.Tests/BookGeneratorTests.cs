@@ -113,6 +113,22 @@ public class BookGeneratorTests
         Assert.IsType<VisualRectangle>(restored!.Book.Worksheets[0].Task.Elements[0]);
     }
 
+    [Fact]
+    public void RegeneratingOneWorksheetKeepsOrderAndReplacesOnlyThatPuzzle()
+    {
+        var generator = new BookGenerator(Registry());
+        var book = generator.Generate(Settings(6, 98765, [new("sudoku", "4x4")]));
+        var originalFingerprints = book.Worksheets.Select(item => item.Fingerprint).ToArray();
+
+        var regenerated = generator.RegenerateWorksheet(book, 3);
+
+        Assert.Equal(Enumerable.Range(1, 6), regenerated.Worksheets.Select(item => item.Number));
+        Assert.NotEqual(originalFingerprints[2], regenerated.Worksheets[2].Fingerprint);
+        Assert.Equal(originalFingerprints.Where((_, index) => index != 2),
+            regenerated.Worksheets.Where((_, index) => index != 2).Select(item => item.Fingerprint));
+        Assert.Equal(6, regenerated.Worksheets.Select(item => item.Fingerprint).Distinct().Count());
+    }
+
     private static GeneratedBook Generate(int count, int seed, IReadOnlyList<ModuleSelection> selections) =>
         new BookGenerator(Registry()).Generate(Settings(count, seed, selections));
     private static BookGenerationSettings Settings(int count, int seed, IReadOnlyList<ModuleSelection> selections) =>

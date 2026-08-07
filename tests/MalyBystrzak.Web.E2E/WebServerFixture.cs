@@ -13,7 +13,7 @@ public sealed class WebServerFixture : IAsyncLifetime
     private Task? serverTask;
     public string BaseUrl { get; private set; } = string.Empty;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         BaseUrl = $"http://127.0.0.1:{FindAvailablePort()}";
         var root = FindRepositoryRoot();
@@ -58,7 +58,7 @@ public sealed class WebServerFixture : IAsyncLifetime
         throw new TimeoutException("Aplikacja testowa nie uruchomiła się w wymaganym czasie.");
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (process is { HasExited: false })
         {
