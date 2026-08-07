@@ -132,9 +132,7 @@
                     <div class="secondary-actions">
                         <button @onclick="DownloadPreviewAsync" disabled="@isExporting">Podgląd A5</button>
                         <button data-testid="download-solutions" @onclick="DownloadSolutionsAsync" disabled="@isExporting">Same rozwiązania</button>
-                        <button data-testid="difficulty-report" @onclick="ToggleDifficultyReport">
-                            @(showingDifficultyReport ? "Ukryj raport" : "Raport trudności")
-                        </button>
+                        <button data-testid="difficulty-report" @onclick="OpenDifficultyReport">Raport trudności</button>
                     </div>
                 </div>
                 @if (isExporting)
@@ -143,36 +141,6 @@
                         <div><span>@exportProgressMessage</span><strong>@exportProgressPercent%</strong></div>
                         <progress max="100" value="@exportProgressPercent"></progress>
                     </div>
-                }
-                @if (showingDifficultyReport)
-                {
-                    <section class="difficulty-report" data-testid="difficulty-report-panel">
-                        <header>
-                            <div><span>RAPORT TRUDNOŚCI</span><h4>@book.Worksheets.Count zadań</h4></div>
-                            <div class="report-summary">
-                                <strong>@DifficultyAverage</strong><small>średnia / 100</small>
-                                <strong>@DifficultyMinimum–@DifficultyMaximum</strong><small>zakres</small>
-                            </div>
-                        </header>
-                        <div class="report-table-wrap">
-                            <table>
-                                <thead><tr><th>Nr</th><th>Zadanie</th><th>Wynik</th><th>Poziom</th><th>Luka</th><th>Wybór</th><th>Reguły</th><th>Pamięć</th><th>Rachunki</th></tr></thead>
-                                <tbody>
-                                    @foreach (var worksheet in book.Worksheets.OrderBy(item => item.Number))
-                                    {
-                                        <tr>
-                                            <td>@worksheet.Number</td><td>@worksheet.TypeName</td>
-                                            <td><strong>@worksheet.Difficulty.Score</strong>/100</td>
-                                            <td><span class="report-stars">@Dots(worksheet.DisplayStars)</span> @worksheet.Difficulty.Label</td>
-                                            <td>@worksheet.Difficulty.InformationGap</td><td>@worksheet.Difficulty.ChoiceLoad</td>
-                                            <td>@worksheet.Difficulty.ConstraintLoad</td><td>@worksheet.Difficulty.WorkingMemoryLoad</td>
-                                            <td>@worksheet.Difficulty.ArithmeticLoad</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
                 }
                 <div class="save-project">
                     <input aria-label="Nazwa projektu" maxlength="60" @bind="projectName" />
@@ -208,6 +176,58 @@
         </div>
     }
 </section>
+
+@if (showingDifficultyReport && book is not null)
+{
+    <div class="report-modal-backdrop" @onclick="CloseDifficultyReport">
+        <section class="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title"
+                 data-testid="difficulty-report-panel" @onclick:stopPropagation="true">
+            <header class="report-modal-header">
+                <div>
+                    <span class="step-label">ANALIZA KSIĄŻECZKI</span>
+                    <h2 id="report-title">Raport trudności</h2>
+                    <p>@book.Settings.Title · @book.Worksheets.Count zadań</p>
+                </div>
+                <button class="report-close" data-testid="difficulty-report-close" @onclick="CloseDifficultyReport" aria-label="Zamknij raport">×</button>
+            </header>
+            <div class="report-overview">
+                <article><span>Średni wynik</span><strong>@DifficultyAverage<small>/100</small></strong><i class="score-line"><b style="width:@DifficultyAverage%"></b></i></article>
+                <article><span>Zakres trudności</span><strong>@DifficultyMinimum–@DifficultyMaximum</strong><small>od najłatwiejszego do najtrudniejszego</small></article>
+                <article><span>Liczba zadań</span><strong>@book.Worksheets.Count</strong><small>@DifficultyTypeCount rodzajów w książeczce</small></article>
+            </div>
+            <div class="report-legend">
+                <span><b>Luka</b> ile informacji trzeba samodzielnie odkryć</span>
+                <span><b>Wybór</b> liczba możliwych decyzji</span>
+                <span><b>Reguły</b> obciążenie zależnościami</span>
+                <span><b>Pamięć</b> ile trzeba utrzymać w głowie</span>
+                <span><b>Rachunki</b> udział obliczeń</span>
+            </div>
+            <div class="report-table-wrap">
+                <table>
+                    <thead><tr><th>Nr</th><th>Zadanie</th><th>Wynik</th><th>Poziom</th><th>Luka</th><th>Wybór</th><th>Reguły</th><th>Pamięć</th><th>Rachunki</th></tr></thead>
+                    <tbody>
+                        @foreach (var worksheet in book.Worksheets.OrderBy(item => item.Number))
+                        {
+                            <tr>
+                                <td><span class="report-number">@worksheet.Number</span></td>
+                                <td><strong class="report-type">@worksheet.TypeName</strong></td>
+                                <td><span class="score-badge score-@ScoreBand(worksheet.Difficulty.Score)">@worksheet.Difficulty.Score</span></td>
+                                <td><span class="report-stars">@Dots(worksheet.DisplayStars)</span><small class="level-label">@worksheet.Difficulty.Label</small></td>
+                                <td>@worksheet.Difficulty.InformationGap</td><td>@worksheet.Difficulty.ChoiceLoad</td>
+                                <td>@worksheet.Difficulty.ConstraintLoad</td><td>@worksheet.Difficulty.WorkingMemoryLoad</td>
+                                <td>@worksheet.Difficulty.ArithmeticLoad</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <footer class="report-modal-footer">
+                <span>Wynik 0–100 pozwala porównywać zadania w tej książeczce.</span>
+                <button @onclick="CloseDifficultyReport">Gotowe</button>
+            </footer>
+        </section>
+    </div>
+}
 
 @code {
     private readonly List<VariantChoice> choices = [];
@@ -295,10 +315,13 @@
         previewPages.Count == 0 ? [] : previewPages[Math.Min(previewPage, previewPages.Count - 1)];
     private void PreviousPreviewPage() => previewPage = Math.Max(0, previewPage - 1);
     private void NextPreviewPage() => previewPage = Math.Min(PreviewPageCount - 1, previewPage + 1);
-    private void ToggleDifficultyReport() => showingDifficultyReport = !showingDifficultyReport;
+    private void OpenDifficultyReport() => showingDifficultyReport = true;
+    private void CloseDifficultyReport() => showingDifficultyReport = false;
     private int DifficultyAverage => book is null ? 0 : (int)Math.Round(book.Worksheets.Average(item => item.Difficulty.Score));
     private int DifficultyMinimum => book?.Worksheets.Min(item => item.Difficulty.Score) ?? 0;
     private int DifficultyMaximum => book?.Worksheets.Max(item => item.Difficulty.Score) ?? 0;
+    private int DifficultyTypeCount => book?.Worksheets.Select(item => item.TypeName).Distinct().Count() ?? 0;
+    private static string ScoreBand(int score) => score switch { < 34 => "easy", < 67 => "medium", _ => "hard" };
 
     private async Task DownloadBookletAsync() => await DownloadPdfAsync("maly-bystrzak-broszura-a4.pdf", true);
     private async Task DownloadPreviewAsync() => await DownloadPdfAsync("maly-bystrzak-podglad-a5.pdf", false);
