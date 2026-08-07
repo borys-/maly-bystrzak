@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MalyBystrzak.Core;
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
@@ -10,6 +11,9 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
     private const double A5Width = 419.53;
     private const double A5Height = 595.28;
     private static readonly object FontLock = new();
+    private static readonly ConcurrentDictionary<(double Size, bool Bold), XFont> Fonts = new();
+    private static readonly ConcurrentDictionary<string, XColor> Colors = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, XBrush> Brushes = new(StringComparer.OrdinalIgnoreCase);
     private static bool fontInitialized;
 
     public BookPdfRenderer() => EnsureFont();
@@ -245,9 +249,11 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         new XRect(x, y, width, height), XStringFormats.Center);
     private static XRect Inset(XRect rect, double value) => new(rect.X + value, rect.Y + value,
         rect.Width - value * 2, rect.Height - value * 2);
-    private static XFont Font(double size, bool bold = false) => new("Lato", size, bold ? XFontStyleEx.Bold : XFontStyleEx.Regular);
-    private static XColor Color(string hex) => XColor.FromArgb(Convert.ToInt32(hex.TrimStart('#'), 16) | unchecked((int)0xff000000));
-    private static XBrush Brush(string hex) => new XSolidBrush(Color(hex));
+    private static XFont Font(double size, bool bold = false) => Fonts.GetOrAdd((Math.Round(size, 3), bold), key =>
+        new XFont("Lato", key.Size, key.Bold ? XFontStyleEx.Bold : XFontStyleEx.Regular));
+    private static XColor Color(string hex) => Colors.GetOrAdd(hex, value =>
+        XColor.FromArgb(Convert.ToInt32(value.TrimStart('#'), 16) | unchecked((int)0xff000000)));
+    private static XBrush Brush(string hex) => Brushes.GetOrAdd(hex, value => new XSolidBrush(Color(value)));
     private static XColor DifficultyColor(int stars) => Color(stars switch
     {
         1 => "#8edbc4", 2 => "#74d7b5", 3 => "#88ccf1", 4 => "#ffd966", 5 => "#ff9f68", _ => "#f15a8a"
