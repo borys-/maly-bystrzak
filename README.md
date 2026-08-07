@@ -8,7 +8,7 @@ Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
 
 - podgląd PDF A5 w naturalnej kolejności;
 - broszura PDF A4 z impozycją do druku dwustronnego;
-- sześć zadań na stronie i opcjonalna sekcja rozwiązań;
+- sześcioslotowy układ strony; Nonogram 7×7 i 10×10 oraz Labirynt 15×15 zajmują po cztery sloty;
 - raport trudności CSV;
 - personalizacja tytułu, podtytułu i imienia dziecka;
 - zakres wyniku trudności i względne gwiazdki;
