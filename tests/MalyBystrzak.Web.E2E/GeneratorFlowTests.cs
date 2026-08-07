@@ -35,6 +35,13 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.GetByLabel("Liczba zadań").FillAsync("12");
         await Page.GetByTestId("generate").ClickAsync();
         await Expect(Page.GetByTestId("result")).ToContainTextAsync("12 zadań", new() { Timeout = 60_000 });
+        await Expect(Page.GetByText("Raport CSV", new() { Exact = true })).ToHaveCountAsync(0);
+        await Page.GetByTestId("difficulty-report").ClickAsync();
+        await Expect(Page.GetByTestId("difficulty-report-panel")).ToContainTextAsync("RAPORT TRUDNOŚCI");
+        await Expect(Page.GetByTestId("difficulty-report-panel").Locator("tbody tr")).ToHaveCountAsync(12);
+        await Expect(Page.GetByTestId("difficulty-report-panel")).Not.ToContainTextAsync("Czas");
+        await Expect(Page.GetByTestId("difficulty-report-panel")).Not.ToContainTextAsync("Błędy");
+        await Page.GetByTestId("difficulty-report").ClickAsync();
         await Page.GetByTestId("preview-solutions").ClickAsync();
         await Expect(Page.Locator(".preview-card svg").First).ToHaveAttributeAsync("aria-label", new Regex("Rozwiązanie 1"));
         await Page.GetByTestId("preview-tasks").ClickAsync();
@@ -50,6 +57,8 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         Assert.True(visibleGlyphs > 0);
         var download = await Page.RunAndWaitForDownloadAsync(() => Page.GetByTestId("download-booklet").ClickAsync());
         Assert.Equal("maly-bystrzak-broszura-a4.pdf", download.SuggestedFilename);
+        await Expect(Page.GetByTestId("download-solutions")).ToBeEnabledAsync();
+        await Page.WaitForTimeoutAsync(100);
         var solutions = await Page.RunAndWaitForDownloadAsync(() => Page.GetByTestId("download-solutions").ClickAsync());
         Assert.Equal("maly-bystrzak-rozwiazania-a5.pdf", solutions.SuggestedFilename);
     }

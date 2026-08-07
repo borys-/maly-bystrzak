@@ -130,9 +130,11 @@
                 <div class="download-stack">
                     <button class="primary-button" data-testid="download-booklet" @onclick="DownloadBookletAsync" disabled="@isExporting"><span>@(isExporting ? "Przygotowuję PDF…" : "Pobierz broszurę A4")</span><b>↓</b></button>
                     <div class="secondary-actions">
-                        <button @onclick="DownloadPreviewAsync">Podgląd A5</button>
-                        <button data-testid="download-solutions" @onclick="DownloadSolutionsAsync">Same rozwiązania</button>
-                        <button @onclick="DownloadCsvAsync">Raport CSV</button>
+                        <button @onclick="DownloadPreviewAsync" disabled="@isExporting">Podgląd A5</button>
+                        <button data-testid="download-solutions" @onclick="DownloadSolutionsAsync" disabled="@isExporting">Same rozwiązania</button>
+                        <button data-testid="difficulty-report" @onclick="ToggleDifficultyReport">
+                            @(showingDifficultyReport ? "Ukryj raport" : "Raport trudności")
+                        </button>
                     </div>
                 </div>
                 @if (isExporting)
@@ -141,6 +143,36 @@
                         <div><span>@exportProgressMessage</span><strong>@exportProgressPercent%</strong></div>
                         <progress max="100" value="@exportProgressPercent"></progress>
                     </div>
+                }
+                @if (showingDifficultyReport)
+                {
+                    <section class="difficulty-report" data-testid="difficulty-report-panel">
+                        <header>
+                            <div><span>RAPORT TRUDNOŚCI</span><h4>@book.Worksheets.Count zadań</h4></div>
+                            <div class="report-summary">
+                                <strong>@DifficultyAverage</strong><small>średnia / 100</small>
+                                <strong>@DifficultyMinimum–@DifficultyMaximum</strong><small>zakres</small>
+                            </div>
+                        </header>
+                        <div class="report-table-wrap">
+                            <table>
+                                <thead><tr><th>Nr</th><th>Zadanie</th><th>Wynik</th><th>Poziom</th><th>Luka</th><th>Wybór</th><th>Reguły</th><th>Pamięć</th><th>Rachunki</th></tr></thead>
+                                <tbody>
+                                    @foreach (var worksheet in book.Worksheets.OrderBy(item => item.Number))
+                                    {
+                                        <tr>
+                                            <td>@worksheet.Number</td><td>@worksheet.TypeName</td>
+                                            <td><strong>@worksheet.Difficulty.Score</strong>/100</td>
+                                            <td><span class="report-stars">@Dots(worksheet.DisplayStars)</span> @worksheet.Difficulty.Label</td>
+                                            <td>@worksheet.Difficulty.InformationGap</td><td>@worksheet.Difficulty.ChoiceLoad</td>
+                                            <td>@worksheet.Difficulty.ConstraintLoad</td><td>@worksheet.Difficulty.WorkingMemoryLoad</td>
+                                            <td>@worksheet.Difficulty.ArithmeticLoad</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 }
                 <div class="save-project">
                     <input aria-label="Nazwa projektu" maxlength="60" @bind="projectName" />
@@ -194,6 +226,7 @@
     private int scoreMax = 80;
     private bool includeSolutions;
     private bool showingSolutions;
+    private bool showingDifficultyReport;
     private int previewPage;
     private bool isGenerating;
     private bool isExporting;
@@ -246,6 +279,7 @@
             previewPages = BookLayout.PackWorksheets(book.Worksheets);
             previewPage = 0;
             showingSolutions = false;
+            showingDifficultyReport = false;
             projectName = string.IsNullOrWhiteSpace(childName) ? title : $"{title} — {childName}";
             await JS.InvokeVoidAsync("malyBystrzak.setPreference", "last-settings", JsonSerializer.Serialize(settings));
         }
@@ -261,6 +295,10 @@
         previewPages.Count == 0 ? [] : previewPages[Math.Min(previewPage, previewPages.Count - 1)];
     private void PreviousPreviewPage() => previewPage = Math.Max(0, previewPage - 1);
     private void NextPreviewPage() => previewPage = Math.Min(PreviewPageCount - 1, previewPage + 1);
+    private void ToggleDifficultyReport() => showingDifficultyReport = !showingDifficultyReport;
+    private int DifficultyAverage => book is null ? 0 : (int)Math.Round(book.Worksheets.Average(item => item.Difficulty.Score));
+    private int DifficultyMinimum => book?.Worksheets.Min(item => item.Difficulty.Score) ?? 0;
+    private int DifficultyMaximum => book?.Worksheets.Max(item => item.Difficulty.Score) ?? 0;
 
     private async Task DownloadBookletAsync() => await DownloadPdfAsync("maly-bystrzak-broszura-a4.pdf", true);
     private async Task DownloadPreviewAsync() => await DownloadPdfAsync("maly-bystrzak-podglad-a5.pdf", false);
@@ -293,12 +331,6 @@
         finally { isExporting = false; }
     }
 
-    private async Task DownloadCsvAsync()
-    {
-        if (book is null) return;
-        await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", DifficultyReport.FileName, "text/csv", DifficultyReport.Create(book.Worksheets));
-    }
-
     private async Task SaveProjectAsync()
     {
         if (book is null || string.IsNullOrWhiteSpace(projectName)) return;
@@ -315,7 +347,7 @@
         if (project is null) { error = "Nie udało się odczytać projektu."; return; }
         activeProjectId = project.Id; book = project.Book;
         previewPages = BookLayout.PackWorksheets(book.Worksheets);
-        previewPage = 0; showingSolutions = false;
+        previewPage = 0; showingSolutions = false; showingDifficultyReport = false;
         ApplySettings(book.Settings);
         projectName = project.Name;
         message = "Projekt został otwarty.";
