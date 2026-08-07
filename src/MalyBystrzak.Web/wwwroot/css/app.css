@@ -1,9 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-
 :root { --navy:#25316d; --pink:#ef5b88; --mint:#87d9c0; --sky:#83cbef; --yellow:#ffd466; --paper:#fffdf8; --ink:#263160; --muted:#6c7394; --line:#e7e8ef; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { margin:0; color:var(--ink); background:var(--paper); font-family:'Nunito',system-ui,sans-serif; }
+body { margin:0; color:var(--ink); background:var(--paper); font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
 button,input { font:inherit; }
 button,a { -webkit-tap-highlight-color:transparent; }
 button { cursor:pointer; }

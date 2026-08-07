@@ -174,6 +174,7 @@
     private readonly List<VariantChoice> choices = [];
     private IReadOnlyList<ProjectSummary> projects = [];
     private GeneratedBook? book;
+    private IReadOnlyList<IReadOnlyList<WorksheetPlacement>> previewPages = [];
     private Guid? activeProjectId;
     private string title = "Moja książeczka zadań";
     private string subtitle = "Łamigłówki dla małych bystrzaków";
@@ -227,6 +228,7 @@
                 _ = InvokeAsync(StateHasChanged);
             });
             book = Generator.Generate(settings, progress, cancellation.Token);
+            previewPages = BookLayout.PackWorksheets(book.Worksheets);
             previewPage = 0;
             showingSolutions = false;
             projectName = string.IsNullOrWhiteSpace(childName) ? title : $"{title} — {childName}";
@@ -239,11 +241,9 @@
 
     private void CancelGeneration() => cancellation?.Cancel();
     private void RandomizeSeed() => seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
-    private IReadOnlyList<IReadOnlyList<WorksheetPlacement>> PreviewPages =>
-        book is null ? [] : BookLayout.PackWorksheets(book.Worksheets);
-    private int PreviewPageCount => Math.Max(1, PreviewPages.Count);
+    private int PreviewPageCount => Math.Max(1, previewPages.Count);
     private IEnumerable<WorksheetPlacement> PreviewItems =>
-        PreviewPages.Count == 0 ? [] : PreviewPages[Math.Min(previewPage, PreviewPages.Count - 1)];
+        previewPages.Count == 0 ? [] : previewPages[Math.Min(previewPage, previewPages.Count - 1)];
     private void PreviousPreviewPage() => previewPage = Math.Max(0, previewPage - 1);
     private void NextPreviewPage() => previewPage = Math.Min(PreviewPageCount - 1, previewPage + 1);
 
@@ -291,6 +291,7 @@
         var project = await ProjectStore.GetAsync(id);
         if (project is null) { error = "Nie udało się odczytać projektu."; return; }
         activeProjectId = project.Id; book = project.Book;
+        previewPages = BookLayout.PackWorksheets(book.Worksheets);
         previewPage = 0; showingSolutions = false;
         ApplySettings(book.Settings);
         projectName = project.Name;
