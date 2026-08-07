@@ -1,7 +1,10 @@
+using System.Collections.Concurrent;
+
 namespace MalyBystrzak.Modules.Nonograms;
 
 public static class NonogramSolver
 {
+    private static readonly ConcurrentDictionary<(int Size, string Clues), int[]> LineOptionsCache = new();
     public static int CountSolutions(int size, int[][] rowClues, int[][] columnClues, int limit = 2,
         CancellationToken cancellationToken = default) => Solve(size, rowClues, columnClues, limit, cancellationToken).Solutions;
 
@@ -60,8 +63,30 @@ public static class NonogramSolver
 
     private static int[] LineOptions(int size, int[] clues)
     {
+        var key = (size, string.Join(',', clues));
+        return LineOptionsCache.GetOrAdd(key, _ => CreateLineOptions(size, clues));
+    }
+
+    private static int[] CreateLineOptions(int size, int[] clues)
+    {
         if (clues.Length == 1 && clues[0] == 0) return [0];
-        return Enumerable.Range(0, 1 << size).Where(mask =>
-            Clues(Enumerable.Range(0, size).Select(index => (mask & (1 << index)) != 0)).SequenceEqual(clues)).ToArray();
+        var result = new List<int>();
+        for (var mask = 0; mask < 1 << size; mask++)
+            if (MatchesClues(mask, size, clues)) result.Add(mask);
+        return result.ToArray();
+    }
+
+    private static bool MatchesClues(int mask, int size, int[] clues)
+    {
+        var clueIndex = 0;
+        var run = 0;
+        for (var index = 0; index <= size; index++)
+        {
+            if (index < size && (mask & (1 << index)) != 0) { run++; continue; }
+            if (run == 0) continue;
+            if (clueIndex >= clues.Length || clues[clueIndex++] != run) return false;
+            run = 0;
+        }
+        return clueIndex == clues.Length;
     }
 }
