@@ -63,7 +63,7 @@ internal sealed record CliOptions(
           maly-bystrzak code [opcje]       Generuje szyfry z działań
           maly-bystrzak crossword [opcje]  Generuje krzyżówki matematyczne
           maly-bystrzak products [opcje]   Generuje tabele iloczynów
-          maly-bystrzak word-path [opcje]  Generuje ścieżki literowe
+          maly-bystrzak word-path [opcje]  Generuje ścieżki literowe 5x4, 6x5 lub 7x6
           maly-bystrzak mixed [opcje]      Generuje mieszaną książeczkę
 
         Opcje:
@@ -222,7 +222,7 @@ internal sealed record CliOptions(
     private static bool TryAllowedSize(Dictionary<string, string> values, PuzzleKind kind, out int size, out string? error)
     {
         if (kind is PuzzleKind.Mixed or PuzzleKind.PictureEquations or PuzzleKind.ArithmeticCode or
-            PuzzleKind.MathCrossword or PuzzleKind.ProductGrid or PuzzleKind.WordPath)
+            PuzzleKind.MathCrossword or PuzzleKind.ProductGrid)
         {
             if (values.ContainsKey("--size"))
             {
@@ -233,6 +233,13 @@ internal sealed record CliOptions(
             size = 3;
             error = null;
             return true;
+        }
+        if (kind == PuzzleKind.WordPath)
+        {
+            if (!TryInt(values, "--size", 5, out size, out error)) return false;
+            if (size is 5 or 6 or 7) return true;
+            error = "Dla ścieżek literowych wartość --size musi wynosić 5, 6 albo 7.";
+            return false;
         }
         if (kind == PuzzleKind.Kakuro)
         {

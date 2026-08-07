@@ -11,7 +11,9 @@ public class EducationalPuzzleTests
         { new ArithmeticCodeModule(), "six-letter", WorksheetLayout.HalfPage },
         { new MathCrosswordModule(), "chain", WorksheetLayout.FullPage },
         { new ProductGridModule(), "3x3", WorksheetLayout.FullPage },
-        { new WordPathModule(), "5x4", WorksheetLayout.HalfPage }
+        { new WordPathModule(), "5x4", WorksheetLayout.HalfPage },
+        { new WordPathModule(), "6x5", WorksheetLayout.HalfPage },
+        { new WordPathModule(), "7x6", WorksheetLayout.FullPage }
     };
 
     [Theory, MemberData(nameof(Modules))]
@@ -52,7 +54,7 @@ public class EducationalPuzzleTests
         grid[9] = 'T';
         var path = new WordPathPuzzle(1, 1, "PLANET", grid,
             [new(0, 0), new(0, 1), new(0, 2), new(0, 3), new(0, 4), new(1, 4)],
-            CognitiveDifficulty.Create(20, 20, 20, 20, 20, 20));
+            5, 4, CognitiveDifficulty.Create(20, 20, 20, 20, 20, 20));
         Assert.True(path.IsValid);
     }
 

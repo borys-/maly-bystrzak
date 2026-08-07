@@ -64,7 +64,7 @@ static IReadOnlyList<ModuleSelection> CreateSelections(CliOptions options) => op
     PuzzleKind.ArithmeticCode => [new("arithmetic-code", "six-letter")],
     PuzzleKind.MathCrossword => [new("math-crossword", "chain")],
     PuzzleKind.ProductGrid => [new("product-grid", "3x3")],
-    PuzzleKind.WordPath => [new("word-path", "5x4")],
+    PuzzleKind.WordPath => [new("word-path", options.Size switch { 6 => "6x5", 7 => "7x6", _ => "5x4" })],
     _ => options.Types.Select(type => type switch
     {
         PuzzleType.Sudoku4 => new ModuleSelection("sudoku", "4x4"),
