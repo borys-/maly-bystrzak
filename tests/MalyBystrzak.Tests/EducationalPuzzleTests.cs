@@ -67,7 +67,7 @@ public class EducationalPuzzleTests
     [Fact]
     public void WordPathAvoidsRepeatedWordsUntilDictionaryIsExhausted()
     {
-        const int dictionarySize = 48;
+        const int dictionarySize = 200;
         var worksheets = new WordPathModule().Generate(new("5x4", dictionarySize, 20260808));
         var answers = worksheets.Select(item => item.Solution.Elements.OfType<VisualText>()
             .Single(text => text.Size >= 7 && text.Text.Length is >= 6 and <= 9 && text.Text.All(char.IsUpper)).Text).ToArray();
