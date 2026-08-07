@@ -63,4 +63,16 @@ public class EducationalPuzzleTests
         Assert.Equal(36, worksheets.Count);
         Assert.All(worksheets, item => Assert.Equal(WorksheetLayout.HalfPage, item.Layout));
     }
+
+    [Fact]
+    public void WordPathAvoidsRepeatedWordsUntilDictionaryIsExhausted()
+    {
+        const int dictionarySize = 48;
+        var worksheets = new WordPathModule().Generate(new("5x4", dictionarySize, 20260808));
+        var answers = worksheets.Select(item => item.Solution.Elements.OfType<VisualText>()
+            .Single(text => text.Size >= 7 && text.Text.Length is >= 6 and <= 9 && text.Text.All(char.IsUpper)).Text).ToArray();
+
+        Assert.Equal(dictionarySize, answers.Length);
+        Assert.Equal(answers.Length, answers.Distinct().Count());
+    }
 }

@@ -14,7 +14,15 @@ public sealed record WordPathPuzzle(int Number, int Tier, string Word, char[] Gr
 
 public sealed class WordPathModule : IWorksheetModule
 {
-    internal static readonly string[] Words = ["PLANETA", "PRZYGODA", "MOTYLEK", "KREDKI", "ZABAWA", "ROWEREK", "OGRODEK", "WAKACJE"];
+    internal static readonly string[] Words =
+    [
+        "PLANETA", "PRZYGODA", "MOTYLEK", "KREDKI", "ZABAWA", "ROWEREK", "OGRODEK", "WAKACJE",
+        "BALONIK", "SAMOLOT", "RAKIETA", "PIRACI", "KRAINA", "ZAGADKA", "JAGODY", "MALINA",
+        "POZIOMKA", "BANANY", "MORELKA", "TRUSKAWKA", "RODZINA", "KLOCKI", "PUZZLE", "KARTKA",
+        "WIOSNA", "JESIEN", "DELFIN", "TYGRYS", "ZYRAFA", "MALPKA", "KROLIK", "BIEDRONKA",
+        "PSZCZOLA", "CHOMIK", "MUZYKA", "GITARA", "PIANINO", "SPORTY", "PILKARZ", "BRAMKA",
+        "KOSMOS", "GWIAZDA", "KOMETA", "TAJEMNICA", "ODKRYCIE", "WYPRAWA", "CHMURKA", "FUTBOL"
+    ];
     private static readonly WorksheetInstruction Rules = new("Ścieżka literowa",
         "Zacznij w oznaczonym polu i idź według strzałek.", "Zapisz odczytane hasło.", "#55a9df");
     public string Id => "word-path";
@@ -32,10 +40,11 @@ public sealed class WordPathModule : IWorksheetModule
     {
         var errors = Validate(request); if (errors.Count > 0) throw new ArgumentException(string.Join(' ', errors));
         var random = new Random(request.Seed); var result = new List<GeneratedWorksheet>();
+        var wordOrder = Words.OrderBy(_ => random.Next()).ToArray();
         for (var index = 0; index < request.Count; index++)
         {
             cancellationToken.ThrowIfCancellationRequested(); var tier = PuzzleSupport.Tier(index, request.Count);
-            var word = Words[random.Next(Words.Length)]; var path = CreatePath(random, word.Length);
+            var word = wordOrder[index % wordOrder.Length]; var path = CreatePath(random, word.Length);
             var alphabet = "ABCDEFGHIJKLMNOPRSTUWYZ"; var grid = Enumerable.Range(0, 20)
                 .Select(_ => alphabet[random.Next(alphabet.Length)]).ToArray();
             for (var i = 0; i < path.Count; i++) grid[path[i].Row * 5 + path[i].Column] = word[i];
