@@ -44,11 +44,10 @@ jobs:
         env:
           MALY_BYSTRZAK_PUBLISHED_DIR: ${{ github.workspace }}/publish/wwwroot
 
-      - name: Przygotuj aplikację dla ścieżki GitHub Pages
+      - name: Przygotuj aplikację dla GitHub Pages
         shell: pwsh
         run: |
           $index = "publish/wwwroot/index.html"
-          (Get-Content $index -Raw).Replace('<base href="/" />', '<base href="/maly-bystrzak/" />') | Set-Content $index -NoNewline
           Copy-Item $index "publish/wwwroot/404.html"
           New-Item "publish/wwwroot/.nojekyll" -ItemType File
 
@@ -62,10 +61,10 @@ jobs:
           }
           $index = Get-Content (Join-Path $root "index.html") -Raw
           if (-not $index.Contains('<html lang="pl">')) { throw "Nie ustawiono języka polskiego." }
-          if (-not $index.Contains('rel="canonical" href="https://borys-.github.io/maly-bystrzak/"')) { throw "Brakuje canonicala." }
+          if (-not $index.Contains('rel="canonical" href="https://malybystrzak.pl/"')) { throw "Brakuje canonicala." }
           if (-not $index.Contains('property="og:image"')) { throw "Brakuje obrazu Open Graph." }
           if (-not $index.Contains('application/ld+json')) { throw "Brakuje danych strukturalnych JSON-LD." }
-          if (-not $index.Contains('<base href="/maly-bystrzak/" />')) { throw "Niepoprawna ścieżka bazowa GitHub Pages." }
+          if (-not $index.Contains('<base href="/" />')) { throw "Niepoprawna ścieżka bazowa GitHub Pages." }
 
       - name: Przekaż artefakt GitHub Pages
         uses: actions/upload-pages-artifact@v5

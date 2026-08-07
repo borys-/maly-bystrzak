@@ -286,7 +286,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
 
         DrawCentered(graphics, "Stwórz kolejną książeczkę:", 9, true, "#25316d",
             page.X + 35, page.Bottom - 105, page.Width - 70, 18, settings.InkSavingMode);
-        DrawCentered(graphics, "https://borys-.github.io/maly-bystrzak/", 9, true, "#f15a8a",
+        DrawCentered(graphics, "https://malybystrzak.pl/", 9, true, "#f15a8a",
             page.X + 35, page.Bottom - 84, page.Width - 70, 18, settings.InkSavingMode);
         DrawCentered(graphics, $"Wygenerowano z ziarnem: {settings.Seed}", 7, false, "#6b7280",
             page.X + 35, page.Bottom - 56, page.Width - 70, 20, settings.InkSavingMode);

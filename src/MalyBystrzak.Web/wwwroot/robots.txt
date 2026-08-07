@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://borys-.github.io/maly-bystrzak/sitemap.xml
+Sitemap: https://malybystrzak.pl/sitemap.xml

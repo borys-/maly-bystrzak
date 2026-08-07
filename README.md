@@ -2,7 +2,7 @@
 
 „Mały Bystrzak” to działający bez backendu generator drukowanych książeczek z zadaniami dla dzieci w wieku 7–10 lat. Aplikacja obsługuje Sudoku 4×4 i 6×6, Kakuro 3×3 i 4×4, labirynty 9×9 i 15×15 oraz nonogramy 5×5, 7×7 i 10×10. Pozwala tworzyć książeczki mieszane z sześcioma poziomami trudności, wynikiem poznawczym 0–100 i odtwarzalnym ziarnem.
 
-Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
+Docelowy adres aplikacji: <https://malybystrzak.pl/>
 
 ## Możliwości
 
@@ -114,7 +114,7 @@ Test ma kategorię `Performance` i jest celowo wyłączony z workflow GitHub Act
 
 ## GitHub Pages
 
-Workflow „Weryfikacja i publikacja GitHub Pages” jest uruchamiany wyłącznie ręcznie przez `workflow_dispatch`. Wykonuje kompilację, testy domenowe, testy Playwright oraz publikację aplikacji pod ścieżką `/maly-bystrzak/`. Sam push do gałęzi `main` nie uruchamia buildu ani wdrożenia.
+Workflow „Weryfikacja i publikacja GitHub Pages” jest uruchamiany wyłącznie ręcznie przez `workflow_dispatch`. Wykonuje kompilację, testy domenowe, testy Playwright oraz publikację aplikacji pod adresem `https://malybystrzak.pl/`. Sam push do gałęzi `main` nie uruchamia buildu ani wdrożenia.
 
 ## Licencja
 

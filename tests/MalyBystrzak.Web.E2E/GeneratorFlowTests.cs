@@ -20,7 +20,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
 
         Assert.Contains("<html lang=\"pl\">", html, StringComparison.Ordinal);
         Assert.Contains($"<title>{SeoTitle}</title>", html, StringComparison.Ordinal);
-        Assert.Contains("rel=\"canonical\" href=\"https://borys-.github.io/maly-bystrzak/\"", html, StringComparison.Ordinal);
+        Assert.Contains("rel=\"canonical\" href=\"https://malybystrzak.pl/\"", html, StringComparison.Ordinal);
         Assert.Contains("property=\"og:image\"", html, StringComparison.Ordinal);
         Assert.Contains("name=\"twitter:card\"", html, StringComparison.Ordinal);
         Assert.DoesNotContain("MalyBystrzak.Web.styles.css", html, StringComparison.Ordinal);
@@ -38,8 +38,8 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         var robots = await client.GetStringAsync($"{server.BaseUrl}/robots.txt");
         var sitemap = await client.GetStringAsync($"{server.BaseUrl}/sitemap.xml");
         var appCss = await client.GetStringAsync($"{server.BaseUrl}/css/app.css");
-        Assert.Contains("Sitemap: https://borys-.github.io/maly-bystrzak/sitemap.xml", robots);
-        Assert.Contains("<loc>https://borys-.github.io/maly-bystrzak/</loc>", sitemap);
+        Assert.Contains("Sitemap: https://malybystrzak.pl/sitemap.xml", robots);
+        Assert.Contains("<loc>https://malybystrzak.pl/</loc>", sitemap);
         Assert.Contains(":root", appCss, StringComparison.Ordinal);
 
         using var manifest = JsonDocument.Parse(await client.GetStringAsync($"{server.BaseUrl}/manifest.webmanifest"));
@@ -77,7 +77,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Karty pracy dla rodziców i nauczycieli" })).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Najczęstsze pytania" })).ToBeVisibleAsync();
-        await Expect(Page.Locator("link[rel='canonical']")).ToHaveAttributeAsync("href", "https://borys-.github.io/maly-bystrzak/");
+        await Expect(Page.Locator("link[rel='canonical']")).ToHaveAttributeAsync("href", "https://malybystrzak.pl/");
         await Expect(Page.GetByRole(AriaRole.Checkbox, new() { Name = "Dołącz rozwiązania Odpowiedzi znajdą się w osobnej sekcji na końcu.", Exact = true })).Not.ToBeCheckedAsync();
     }
 
