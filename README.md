@@ -104,6 +104,14 @@ pwsh tests/MalyBystrzak.Web.E2E/bin/Release/net8.0/playwright.ps1 install chromi
 dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
 ```
 
+Lokalny test wydajności mierzy start, generowanie 36 mieszanych zadań, eksport PDF i zapis projektu:
+
+```powershell
+./testuj-wydajnosc.bat
+```
+
+Test ma kategorię `Performance` i jest celowo wyłączony z workflow GitHub Actions, aby wynik nie zależał od współdzielonego runnera CI.
+
 ## GitHub Pages
 
 Workflow „Weryfikacja i publikacja GitHub Pages” jest uruchamiany wyłącznie ręcznie przez `workflow_dispatch`. Wykonuje kompilację, testy domenowe, testy Playwright oraz publikację aplikacji pod ścieżką `/maly-bystrzak/`. Sam push do gałęzi `main` nie uruchamia buildu ani wdrożenia.
