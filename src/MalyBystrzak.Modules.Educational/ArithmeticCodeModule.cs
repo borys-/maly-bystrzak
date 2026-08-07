@@ -55,19 +55,19 @@ public sealed class ArithmeticCodeModule : IWorksheetModule
         var e = new List<VisualElement>();
         for (var i = 0; i < 6; i++)
         {
-            var column = i % 2; var row = i / 2; var x = 4 + column * 49; var y = 7 + row * 22;
+            var column = i % 2; var row = i / 2; var x = 3 + column * 50; var y = 7 + row * 22;
             var equation = puzzle.Equations[i];
-            e.Add(new VisualRectangle(x, y, 25, 15, "#f7d6e4", "none"));
-            e.Add(PuzzleSupport.Text(x + 12.5, y + 10, $"{equation.Left} {equation.Operator} {equation.Right}", 5.5));
-            e.Add(PuzzleSupport.Text(x + 29, y + 10, "=", 5));
-            PuzzleSupport.AnswerBox(e, x + 33, y, 12, 15, solution ? equation.Result.ToString() : null);
-            e.Add(PuzzleSupport.Text(x + 47, y + 10, puzzle.CodeLetters[i].ToString(), 6, true, "#19a88e"));
+            e.Add(new VisualRectangle(x, y, 23, 15, "#f7d6e4", "none"));
+            e.Add(PuzzleSupport.Text(x + 11.5, y + 10, $"{equation.Left} {equation.Operator} {equation.Right}", 5.1));
+            e.Add(PuzzleSupport.Text(x + 26, y + 10, "=", 4.5));
+            PuzzleSupport.AnswerBox(e, x + 29, y, 10, 15, solution ? equation.Result.ToString() : null);
+            e.Add(PuzzleSupport.Text(x + 44, y + 10, puzzle.CodeLetters[i].ToString(), 5.5, true, "#19a88e"));
         }
         for (var i = 0; i < 6; i++)
         {
-            var x = 8 + i * 15;
-            PuzzleSupport.AnswerBox(e, x, 79, 13, 14, solution ? puzzle.Word[i].ToString() : null);
-            e.Add(PuzzleSupport.Text(x + 6.5, 98, puzzle.OrderedResults[i].ToString(), 4.5, true, "#19a88e"));
+            var x = 6 + i * 15;
+            PuzzleSupport.AnswerBox(e, x, 79, 12, 14, solution ? puzzle.Word[i].ToString() : null);
+            e.Add(PuzzleSupport.Text(x + 6, 98, puzzle.OrderedResults[i].ToString(), 4.2, true, "#19a88e"));
         }
         return new(100, 103, e);
     }

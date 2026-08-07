@@ -73,30 +73,29 @@ public sealed class WordPathModule : IWorksheetModule
 
     private static WorksheetVisual Visual(WordPathPuzzle puzzle, bool solution)
     {
-        var e = new List<VisualElement>(); const double cell = 14; const double x0 = 3; const double y0 = 10;
+        var e = new List<VisualElement>(); const double cell = 14; const double x0 = 3; const double y0 = 12;
         for (var row = 0; row < 4; row++) for (var column = 0; column < 5; column++)
         {
             var point = new GridPoint(row, column); var pathIndex = puzzle.Path.IndexOf(point);
             e.Add(new VisualRectangle(x0 + column * cell, y0 + row * cell, cell, cell,
                 solution && pathIndex >= 0 ? "#d9f4ee" : pathIndex == 0 ? "#fff1f6" : "#ffffff", "#25316d", .65));
             e.Add(PuzzleSupport.Text(x0 + column * cell + cell / 2, y0 + row * cell + 9, puzzle.Grid[row * 5 + column].ToString(), 6));
-            if (pathIndex == 0) e.Add(new VisualEllipse(x0 + column * cell + 2.5, y0 + row * cell + 2.5,
-                1.4, 1.4, "none", "#f15a8a", .8));
+            if (pathIndex == 0) e.Add(new VisualEllipse(x0 + column * cell + cell / 2, y0 + row * cell + cell / 2,
+                5.5, 5.5, "none", "#f15a8a", 1.1));
         }
         var arrows = puzzle.Path.Zip(puzzle.Path.Skip(1), (a, b) => b.Row < a.Row ? "↑" : b.Row > a.Row ? "↓" : b.Column < a.Column ? "←" : "→").ToArray();
-        e.Add(PuzzleSupport.Text(89, 8, "● START", 4.2, true, "#f15a8a"));
-        e.Add(PuzzleSupport.Text(89, 26, string.Join(' ', arrows.Take(3)), 4.2));
-        e.Add(PuzzleSupport.Text(89, 38, string.Join(' ', arrows.Skip(3).Take(3)), 4.2));
-        e.Add(PuzzleSupport.Text(89, 50, string.Join(' ', arrows.Skip(6)), 4.2));
-        e.Add(PuzzleSupport.Text(78, 62, "HASŁO", 4.5, true, "#19a88e"));
-        PuzzleSupport.AnswerBox(e, 55, 68, 44, 14, solution ? puzzle.Word : null);
+        e.Add(PuzzleSupport.Text(86, 10, "START", 4.2, true, "#f15a8a"));
+        e.Add(PuzzleSupport.Text(86, 25, string.Join(' ', arrows.Take(4)), 4.5));
+        e.Add(PuzzleSupport.Text(86, 37, string.Join(' ', arrows.Skip(4)), 4.5));
+        e.Add(PuzzleSupport.Text(51, 76, "HASŁO", 4.2, true, "#19a88e", "end"));
+        PuzzleSupport.AnswerBox(e, 54, 67, 45, 14, solution ? puzzle.Word : null);
         if (solution)
         {
             var start = puzzle.Path[0];
             e.Add(new VisualEllipse(x0 + start.Column * cell + cell / 2, y0 + start.Row * cell + cell / 2,
                 5, 5, "none", "#f15a8a", 1.2));
         }
-        return new(102, 86, e);
+        return new(102, 84, e);
     }
 }
 

@@ -56,10 +56,11 @@ public sealed class PictureEquationsModule : IWorksheetModule
     private static WorksheetVisual Visual(PictureEquationsPuzzle puzzle, bool solution)
     {
         var e = new List<VisualElement>();
-        Row(e, puzzle, 17, [0, 0, 0], "+", 3 * puzzle.Values[0]);
-        Row(e, puzzle, 39, [0, 1, 1], "+", puzzle.Values[0] + 2 * puzzle.Values[1]);
-        Row(e, puzzle, 61, [1, 2], "+", puzzle.Values[1] + puzzle.Values[2]);
-        Row(e, puzzle, 84, [2, 0], puzzle.Tier <= 2 ? "+" : "×", solution ? puzzle.FinalResult : null);
+        Row(e, puzzle, 16, [0, 0, 0], "+", 3 * puzzle.Values[0]);
+        Row(e, puzzle, 38, [0, 1, 1], "+", puzzle.Values[0] + 2 * puzzle.Values[1]);
+        Row(e, puzzle, 60, [1, 2], "+", puzzle.Values[1] + puzzle.Values[2]);
+        e.Add(new VisualLine(13, 72, 95, 72, .6, "#d8dbe8"));
+        Row(e, puzzle, 86, [2, 0], puzzle.Tier <= 2 ? "+" : "×", solution ? puzzle.FinalResult : null);
         if (solution)
             for (var i = 0; i < 3; i++)
             {

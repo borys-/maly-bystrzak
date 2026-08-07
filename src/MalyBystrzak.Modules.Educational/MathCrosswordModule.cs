@@ -88,24 +88,31 @@ public sealed class MathCrosswordModule : IWorksheetModule
         var e = new List<VisualElement>();
         for (var i = 0; i < puzzle.Chain.Count; i++)
         {
-            var equation = puzzle.Chain[i]; var horizontal = i % 2 == 0;
-            var x = horizontal ? 8 : 53; var y = 4 + i * 12;
-            if (!horizontal) x = 50 - (i % 4) * 7;
+            var equation = puzzle.Chain[i]; var leftToRight = i % 2 == 0;
+            var x = leftToRight ? 7 : 49; var y = 5 + i * 13;
             DrawEquation(e, x, y, equation, solution, i == puzzle.Chain.Count - 1);
             if (i < puzzle.Chain.Count - 1)
-                e.Add(new VisualLine(x + 42, y + 5, horizontal ? 48 : x + 42, y + 12, .7, "#c8c8d8"));
+            {
+                var resultX = x + 40;
+                var nextX = (leftToRight ? 49 : 7) + 4;
+                e.Add(new VisualLine(resultX, y + 10, resultX, y + 11.5, 1.1, "#7058b3"));
+                e.Add(new VisualLine(resultX, y + 11.5, nextX, y + 11.5, 1.1, "#7058b3"));
+                e.Add(new VisualLine(nextX, y + 11.5, nextX, y + 13, 1.1, "#7058b3"));
+            }
         }
-        return new(100, 104, e);
+        return new(100, 108, e);
     }
 
-    private static void DrawEquation(ICollection<VisualElement> e, double x, double y, Equation equation, bool solution, bool terminal)
+    private static void DrawEquation(ICollection<VisualElement> e, double x, double y, Equation equation, bool solution,
+        bool terminal)
     {
         var values = new[] { equation.Left.ToString(), equation.Operator, equation.Right.ToString(), "=", equation.Result.ToString() };
         for (var i = 0; i < values.Length; i++)
         {
             var answerCell = !solution && (terminal ? i == 4 : i == 2);
-            e.Add(new VisualRectangle(x + i * 9, y, 8, 10, answerCell ? "#ffffff" : "#f4f2fb", "#b9b5d0", .55));
-            if (!answerCell) e.Add(PuzzleSupport.Text(x + i * 9 + 4, y + 7, values[i], 4.5));
+            var cellX = x + i * 9;
+            e.Add(new VisualRectangle(cellX, y, 8, 10, answerCell ? "#ffffff" : "#f4f2fb", "#9f98c4", .65));
+            if (!answerCell) e.Add(PuzzleSupport.Text(cellX + 4, y + 7, values[i], 4.2));
         }
     }
 }

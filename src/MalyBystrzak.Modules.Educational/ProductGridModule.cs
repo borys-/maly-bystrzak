@@ -68,7 +68,7 @@ public sealed class ProductGridModule : IWorksheetModule
 
     private static WorksheetVisual Visual(ProductGridPuzzle puzzle, bool solution)
     {
-        var e = new List<VisualElement>(); const double cell = 18; const double x0 = 14; const double y0 = 8;
+        var e = new List<VisualElement>(); const double cell = 19; const double x0 = 11; const double y0 = 7;
         for (var row = 0; row < 3; row++) for (var column = 0; column < 3; column++)
         {
             var x = x0 + column * cell; var y = y0 + row * cell;
@@ -77,13 +77,24 @@ public sealed class ProductGridModule : IWorksheetModule
             PuzzleSupport.Icon(e, puzzle.IconKinds[icon], x + cell / 2, y + cell / 2, .62);
             if (solution) e.Add(PuzzleSupport.Text(x + cell - 2, y + cell - 2, puzzle.Values[icon].ToString(), 3.5, true, "#19a88e"));
         }
-        for (var row = 0; row < 3; row++) e.Add(PuzzleSupport.Text(76, y0 + row * cell + 11, puzzle.RowProducts[row].ToString(), 6));
-        for (var column = 0; column < 3; column++) e.Add(PuzzleSupport.Text(x0 + column * cell + 9, 72, puzzle.ColumnProducts[column].ToString(), 6));
+        for (var row = 0; row < 3; row++)
+        {
+            e.Add(PuzzleSupport.Text(72, y0 + row * cell + 12, "=", 4.5, false, "#6b7280"));
+            e.Add(PuzzleSupport.Text(83, y0 + row * cell + 12, puzzle.RowProducts[row].ToString(), 6));
+        }
+        for (var column = 0; column < 3; column++)
+        {
+            e.Add(PuzzleSupport.Text(x0 + column * cell + 9.5, 69, "=", 4.5, false, "#6b7280"));
+            e.Add(PuzzleSupport.Text(x0 + column * cell + 9.5, 78, puzzle.ColumnProducts[column].ToString(), 5.5));
+        }
         for (var i = 0; i < 5; i++)
         {
-            PuzzleSupport.Icon(e, puzzle.IconKinds[i], 12 + i * 21, 88, .48);
-            PuzzleSupport.AnswerBox(e, 6 + i * 21, 97, 12, 11, solution ? puzzle.Values[i].ToString() : null);
+            var row = i / 3; var column = i % 3;
+            var x = 8 + column * 34; var y = 88 + row * 18;
+            PuzzleSupport.Icon(e, puzzle.IconKinds[i], x + 6, y + 6, .42);
+            e.Add(PuzzleSupport.Text(x + 15, y + 7, "=", 3.8, false, "#6b7280"));
+            PuzzleSupport.AnswerBox(e, x + 19, y, 11, 14, solution ? puzzle.Values[i].ToString() : null);
         }
-        return new(108, 112, e);
+        return new(108, 122, e);
     }
 }
