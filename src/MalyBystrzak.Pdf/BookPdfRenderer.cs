@@ -61,7 +61,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         IProgress<GenerationProgress>? progress, CancellationToken cancellationToken)
     {
         using var pdf = CreateDocument(document, booklet ? "Broszura A4" : "Podgląd A5");
-        var sides = BookLayout.CreateBookletOrder(document.Pages.Count);
+        IReadOnlyList<SheetSide> sides = booklet ? BookLayout.CreateBookletOrder(document.Pages.Count) : [];
         var pageCount = booklet ? sides.Count : document.Pages.Count;
         var total = pageCount + 1;
 
