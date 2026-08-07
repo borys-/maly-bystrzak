@@ -3,6 +3,7 @@ using MalyBystrzak.Core;
 using MalyBystrzak.Modules.Kakuro;
 using MalyBystrzak.Modules.Mazes;
 using MalyBystrzak.Modules.Nonograms;
+using MalyBystrzak.Modules.Educational;
 using MalyBystrzak.Modules.Sudoku;
 using MalyBystrzak.Pdf;
 
@@ -32,8 +33,9 @@ try
     Directory.CreateDirectory(cli.OutputDirectory);
     var selections = CreateSelections(cli);
     var settings = new BookGenerationSettings(cli.Title, cli.Subtitle, cli.ChildName, cli.Count, cli.Seed,
-        selections, cli.ScoreMinimum, cli.ScoreMaximum, cli.RelativeStars, cli.IncludeSolutions);
-    var registry = new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule(), new MazeModule(), new NonogramModule()]);
+        selections, cli.ScoreMinimum, cli.ScoreMaximum, cli.RelativeStars, cli.IncludeSolutions, cli.InkSavingMode);
+    var registry = new WorksheetModuleRegistry([new SudokuModule(), new KakuroModule(), new MazeModule(), new NonogramModule(),
+        new PictureEquationsModule(), new ArithmeticCodeModule(), new MathCrosswordModule(), new ProductGridModule(), new WordPathModule()]);
     var progress = new Progress<GenerationProgress>(value => Console.WriteLine(value.Message));
     var book = new BookGenerator(registry).Generate(settings, progress);
     var document = book.CreateDocument();
@@ -58,6 +60,11 @@ static IReadOnlyList<ModuleSelection> CreateSelections(CliOptions options) => op
     PuzzleKind.Kakuro => [new("kakuro", $"{options.Size}x{options.Size}")],
     PuzzleKind.Maze => [new("maze", $"{options.Size}x{options.Size}")],
     PuzzleKind.Nonogram => [new("nonogram", $"{options.Size}x{options.Size}")],
+    PuzzleKind.PictureEquations => [new("picture-equations", "animals")],
+    PuzzleKind.ArithmeticCode => [new("arithmetic-code", "six-letter")],
+    PuzzleKind.MathCrossword => [new("math-crossword", "chain")],
+    PuzzleKind.ProductGrid => [new("product-grid", "3x3")],
+    PuzzleKind.WordPath => [new("word-path", "5x4")],
     _ => options.Types.Select(type => type switch
     {
         PuzzleType.Sudoku4 => new ModuleSelection("sudoku", "4x4"),
@@ -68,6 +75,11 @@ static IReadOnlyList<ModuleSelection> CreateSelections(CliOptions options) => op
         PuzzleType.Maze15 => new ModuleSelection("maze", "15x15"),
         PuzzleType.Nonogram5 => new ModuleSelection("nonogram", "5x5"),
         PuzzleType.Nonogram7 => new ModuleSelection("nonogram", "7x7"),
-        _ => new ModuleSelection("nonogram", "10x10")
+        PuzzleType.Nonogram10 => new ModuleSelection("nonogram", "10x10"),
+        PuzzleType.PictureEquations => new ModuleSelection("picture-equations", "animals"),
+        PuzzleType.ArithmeticCode => new ModuleSelection("arithmetic-code", "six-letter"),
+        PuzzleType.MathCrossword => new ModuleSelection("math-crossword", "chain"),
+        PuzzleType.ProductGrid => new ModuleSelection("product-grid", "3x3"),
+        _ => new ModuleSelection("word-path", "5x4")
     }).ToArray()
 };

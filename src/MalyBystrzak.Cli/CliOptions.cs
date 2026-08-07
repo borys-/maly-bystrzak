@@ -3,8 +3,9 @@ using MalyBystrzak.Core;
 
 namespace MalyBystrzak.Cli;
 
-internal enum PuzzleKind { Sudoku, Kakuro, Maze, Nonogram, Mixed }
-internal enum PuzzleType { Sudoku4, Sudoku6, Kakuro3, Kakuro4, Maze9, Maze15, Nonogram5, Nonogram7, Nonogram10 }
+internal enum PuzzleKind { Sudoku, Kakuro, Maze, Nonogram, PictureEquations, ArithmeticCode, MathCrossword, ProductGrid, WordPath, Mixed }
+internal enum PuzzleType { Sudoku4, Sudoku6, Kakuro3, Kakuro4, Maze9, Maze15, Nonogram5, Nonogram7, Nonogram10,
+    PictureEquations, ArithmeticCode, MathCrossword, ProductGrid, WordPath }
 
 internal sealed record CliOptions(
     PuzzleKind Kind,
@@ -22,12 +23,18 @@ internal sealed record CliOptions(
     int? ScoreMaximum,
     bool RelativeStars)
 {
+    public bool InkSavingMode { get; init; }
     public string PreviewFileName => Kind switch
     {
         PuzzleKind.Sudoku => "sudoku-podglad-a5.pdf",
         PuzzleKind.Kakuro => "kakuro-podglad-a5.pdf",
         PuzzleKind.Maze => "labirynty-podglad-a5.pdf",
         PuzzleKind.Nonogram => "nonogramy-podglad-a5.pdf",
+        PuzzleKind.PictureEquations => "rownania-obrazkowe-podglad-a5.pdf",
+        PuzzleKind.ArithmeticCode => "szyfry-podglad-a5.pdf",
+        PuzzleKind.MathCrossword => "krzyzowki-matematyczne-podglad-a5.pdf",
+        PuzzleKind.ProductGrid => "tabele-iloczynow-podglad-a5.pdf",
+        PuzzleKind.WordPath => "sciezki-literowe-podglad-a5.pdf",
         _ => "lamiglowki-podglad-a5.pdf"
     };
     public string BookletFileName => Kind switch
@@ -36,6 +43,11 @@ internal sealed record CliOptions(
         PuzzleKind.Kakuro => "kakuro-broszura-a4.pdf",
         PuzzleKind.Maze => "labirynty-broszura-a4.pdf",
         PuzzleKind.Nonogram => "nonogramy-broszura-a4.pdf",
+        PuzzleKind.PictureEquations => "rownania-obrazkowe-broszura-a4.pdf",
+        PuzzleKind.ArithmeticCode => "szyfry-broszura-a4.pdf",
+        PuzzleKind.MathCrossword => "krzyzowki-matematyczne-broszura-a4.pdf",
+        PuzzleKind.ProductGrid => "tabele-iloczynow-broszura-a4.pdf",
+        PuzzleKind.WordPath => "sciezki-literowe-broszura-a4.pdf",
         _ => "lamiglowki-broszura-a4.pdf"
     };
 
@@ -47,6 +59,11 @@ internal sealed record CliOptions(
           maly-bystrzak kakuro [opcje]     Generuje dziecięce Kakuro 3x3 lub 4x4
           maly-bystrzak maze [opcje]       Generuje labirynty 9x9 lub 15x15
           maly-bystrzak nonogram [opcje]   Generuje nonogramy 5x5, 7x7 lub 10x10
+          maly-bystrzak pictures [opcje]   Generuje równania obrazkowe
+          maly-bystrzak code [opcje]       Generuje szyfry z działań
+          maly-bystrzak crossword [opcje]  Generuje krzyżówki matematyczne
+          maly-bystrzak products [opcje]   Generuje tabele iloczynów
+          maly-bystrzak word-path [opcje]  Generuje ścieżki literowe
           maly-bystrzak mixed [opcje]      Generuje mieszaną książeczkę
 
         Opcje:
@@ -62,6 +79,7 @@ internal sealed record CliOptions(
           --score-max <0-100>     Maksymalny wskaźnik dla mixed
           --relative-stars        Równe grupy 1-5 gwiazdek wewnątrz książeczki
           --include-solutions     Dołącz rozwiązania na końcu książeczki
+          --ink-saving           Oszczędny druk czarno-biały
           --overwrite             Zezwól na zastąpienie istniejących plików
           --help, -h              Pokaż tę pomoc
 
@@ -82,7 +100,8 @@ internal sealed record CliOptions(
             return true;
 
         var command = args.Length == 0 ? string.Empty : args[0].ToLowerInvariant();
-        if (command is not "generate" and not "kakuro" and not "maze" and not "nonogram" and not "mixed")
+        if (command is not "generate" and not "kakuro" and not "maze" and not "nonogram" and not "pictures" and
+            not "code" and not "crossword" and not "products" and not "word-path" and not "mixed")
         {
             error = "Brak polecenia. Użyj: generate, kakuro, maze, nonogram albo mixed.";
             return false;
@@ -92,6 +111,11 @@ internal sealed record CliOptions(
             "kakuro" => PuzzleKind.Kakuro,
             "maze" => PuzzleKind.Maze,
             "nonogram" => PuzzleKind.Nonogram,
+            "pictures" => PuzzleKind.PictureEquations,
+            "code" => PuzzleKind.ArithmeticCode,
+            "crossword" => PuzzleKind.MathCrossword,
+            "products" => PuzzleKind.ProductGrid,
+            "word-path" => PuzzleKind.WordPath,
             "mixed" => PuzzleKind.Mixed,
             _ => PuzzleKind.Sudoku
         };
@@ -100,6 +124,7 @@ internal sealed record CliOptions(
         var overwrite = false;
         var relativeStars = false;
         var includeSolutions = false;
+        var inkSavingMode = false;
         var knownValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "--output", "--count", "--size", "--title", "--subtitle", "--child-name", "--seed", "--types",
@@ -122,6 +147,11 @@ internal sealed record CliOptions(
             if (argument.Equals("--include-solutions", StringComparison.OrdinalIgnoreCase))
             {
                 includeSolutions = true;
+                continue;
+            }
+            if (argument.Equals("--ink-saving", StringComparison.OrdinalIgnoreCase))
+            {
+                inkSavingMode = true;
                 continue;
             }
             if (!knownValues.Contains(argument))
@@ -153,6 +183,11 @@ internal sealed record CliOptions(
             PuzzleKind.Kakuro => "Moja książeczka Kakuro",
             PuzzleKind.Maze => "Moja książeczka labiryntów",
             PuzzleKind.Nonogram => "Moja książeczka nonogramów",
+            PuzzleKind.PictureEquations => "Moje równania obrazkowe",
+            PuzzleKind.ArithmeticCode => "Moje szyfry z działań",
+            PuzzleKind.MathCrossword => "Moje krzyżówki matematyczne",
+            PuzzleKind.ProductGrid => "Moje tabele iloczynów",
+            PuzzleKind.WordPath => "Moje ścieżki literowe",
             PuzzleKind.Mixed => "Moja książeczka łamigłówek",
             _ => "Moja książeczka Sudoku"
         };
@@ -167,7 +202,7 @@ internal sealed record CliOptions(
 
         options = new CliOptions(kind, Path.GetFullPath(output), count, size, title.Trim(), subtitle.Trim(),
             string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(), seed, overwrite, includeSolutions, types,
-            scoreMinimum, scoreMaximum, relativeStars);
+            scoreMinimum, scoreMaximum, relativeStars) { InkSavingMode = inkSavingMode };
         return true;
     }
 
@@ -186,7 +221,8 @@ internal sealed record CliOptions(
 
     private static bool TryAllowedSize(Dictionary<string, string> values, PuzzleKind kind, out int size, out string? error)
     {
-        if (kind == PuzzleKind.Mixed)
+        if (kind is PuzzleKind.Mixed or PuzzleKind.PictureEquations or PuzzleKind.ArithmeticCode or
+            PuzzleKind.MathCrossword or PuzzleKind.ProductGrid or PuzzleKind.WordPath)
         {
             if (values.ContainsKey("--size"))
             {
@@ -245,7 +281,7 @@ internal sealed record CliOptions(
             return true;
         }
 
-        var text = Get(values, "--types", "sudoku4,sudoku6,kakuro3,kakuro4,maze9,maze15,nonogram5,nonogram7,nonogram10");
+        var text = Get(values, "--types", "sudoku4,sudoku6,kakuro3,kakuro4,maze9,maze15,nonogram5,nonogram7,nonogram10,picture-equations,arithmetic-code,math-crossword,product-grid,word-path");
         var parsed = new List<PuzzleType>();
         foreach (var item in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
@@ -260,12 +296,17 @@ internal sealed record CliOptions(
                 "nonogram5" or "nonogram5x5" => PuzzleType.Nonogram5,
                 "nonogram7" or "nonogram7x7" => PuzzleType.Nonogram7,
                 "nonogram10" or "nonogram10x10" => PuzzleType.Nonogram10,
+                "picture-equations" or "pictures" => PuzzleType.PictureEquations,
+                "arithmetic-code" or "code" => PuzzleType.ArithmeticCode,
+                "math-crossword" or "crossword" => PuzzleType.MathCrossword,
+                "product-grid" or "products" => PuzzleType.ProductGrid,
+                "word-path" or "path" => PuzzleType.WordPath,
                 _ => (PuzzleType?)null
             };
             if (type is null)
             {
                 types = Array.Empty<PuzzleType>();
-                error = $"Nieznany typ zadania: {item}. Dostępne: sudoku4, sudoku6, kakuro3, kakuro4, maze9, maze15, nonogram5, nonogram7, nonogram10.";
+                error = $"Nieznany typ zadania: {item}. Dostępne są typy wymienione w pomocy --help.";
                 return false;
             }
             if (!parsed.Contains(type.Value))

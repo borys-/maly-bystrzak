@@ -9,6 +9,7 @@
     <ProjectReference Include="..\MalyBystrzak.Modules.Kakuro\MalyBystrzak.Modules.Kakuro.csproj" />
     <ProjectReference Include="..\MalyBystrzak.Modules.Mazes\MalyBystrzak.Modules.Mazes.csproj" />
     <ProjectReference Include="..\MalyBystrzak.Modules.Nonograms\MalyBystrzak.Modules.Nonograms.csproj" />
+    <ProjectReference Include="..\MalyBystrzak.Modules.Educational\MalyBystrzak.Modules.Educational.csproj" />
     <ProjectReference Include="..\MalyBystrzak.Pdf\MalyBystrzak.Pdf.csproj" />
   </ItemGroup>
 </Project>

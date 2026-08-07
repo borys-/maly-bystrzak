@@ -90,6 +90,7 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
         var completed = 0;
         foreach (var (selection, count) in required)
         {
+            if (count == 0) continue;
             cancellationToken.ThrowIfCancellationRequested();
             var module = registry.GetRequired(selection.ModuleId);
             progress?.Report(new(completed, settings.Count,

@@ -79,7 +79,7 @@ public class BookLayoutTests
         var page = Assert.Single(BookLayout.PackWorksheets(worksheets));
         var large = Assert.Single(page, placement => placement.Worksheet.Layout == WorksheetLayout.Large);
 
-        Assert.Equal((0, 1, 2, 2), (large.Column, large.Row, large.ColumnSpan, large.RowSpan));
+        Assert.Equal((0, 2, 2, 4), (large.Column, large.Row, large.ColumnSpan, large.RowSpan));
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class BookLayoutTests
         worksheets[2] = worksheets[2] with { Layout = WorksheetLayout.Large };
 
         var pages = BookLayout.PackWorksheets(BookLayout.ArrangeForFullPages(worksheets));
-        var usedSlots = pages.Select(page => page.Sum(item => item.ColumnSpan * item.RowSpan)).ToArray();
+        var usedSlots = pages.Select(page => page.Sum(item => Weight(item.Worksheet.Layout))).ToArray();
 
         Assert.Equal(6, usedSlots[0]);
         Assert.Equal(new[] { 6, 5, 4 }, usedSlots);
@@ -119,8 +119,31 @@ public class BookLayoutTests
         var pages = BookLayout.PackWorksheets(BookLayout.ArrangeForFullPages(worksheets));
 
         Assert.Equal(4, pages.Count);
-        Assert.All(pages, page => Assert.Equal(6, page.Sum(item => item.ColumnSpan * item.RowSpan)));
+        Assert.All(pages, page => Assert.Equal(6, page.Sum(item => Weight(item.Worksheet.Layout))));
     }
+
+    [Fact]
+    public void HalfAndFullPageWorksheetsUseExpectedSpace()
+    {
+        var worksheets = FakeWorksheets(3).ToArray();
+        worksheets[0] = worksheets[0] with { Layout = WorksheetLayout.HalfPage };
+        worksheets[1] = worksheets[1] with { Layout = WorksheetLayout.HalfPage };
+        worksheets[2] = worksheets[2] with { Layout = WorksheetLayout.FullPage };
+
+        var pages = BookLayout.PackWorksheets(worksheets);
+
+        Assert.Equal(2, pages.Count);
+        Assert.Equal(6, pages[0].Sum(item => Weight(item.Worksheet.Layout)));
+        Assert.Equal(6, pages[1].Sum(item => Weight(item.Worksheet.Layout)));
+        Assert.Equal((2, 3), (pages[0][0].ColumnSpan, pages[0][0].RowSpan));
+        Assert.Equal((2, 6), (pages[1][0].ColumnSpan, pages[1][0].RowSpan));
+    }
+
+    private static int Weight(WorksheetLayout layout) => layout switch
+    {
+        WorksheetLayout.Standard => 1, WorksheetLayout.Large => 4,
+        WorksheetLayout.HalfPage => 3, WorksheetLayout.FullPage => 6, _ => 0
+    };
 
     private static IReadOnlyList<GeneratedWorksheet> FakeWorksheets(int count)
     {

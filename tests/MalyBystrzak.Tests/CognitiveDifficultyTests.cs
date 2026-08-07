@@ -4,6 +4,7 @@ using MalyBystrzak.Modules.Sudoku;
 using MalyBystrzak.Core;
 using MalyBystrzak.Modules.Mazes;
 using MalyBystrzak.Modules.Nonograms;
+using MalyBystrzak.Modules.Educational;
 
 namespace MalyBystrzak.Tests;
 
@@ -12,13 +13,17 @@ public class CognitiveDifficultyTests
     private static readonly ModuleSelection[] EveryVariant =
     [new("sudoku", "4x4"), new("sudoku", "6x6"), new("kakuro", "3x3"), new("kakuro", "4x4"),
         new("maze", "9x9"), new("maze", "15x15"), new("nonogram", "5x5"),
-        new("nonogram", "7x7"), new("nonogram", "10x10")];
+        new("nonogram", "7x7"), new("nonogram", "10x10"), new("picture-equations", "animals"),
+        new("arithmetic-code", "six-letter"), new("math-crossword", "chain"), new("product-grid", "3x3"),
+        new("word-path", "5x4")];
 
     [Fact]
     public void EveryVariantUsesComparableNormalizedDistribution()
     {
         var generator = new BookGenerator(new WorksheetModuleRegistry(
-            [new SudokuModule(), new KakuroModule(), new MazeModule(), new NonogramModule()]));
+            [new SudokuModule(), new KakuroModule(), new MazeModule(), new NonogramModule(),
+                new PictureEquationsModule(), new ArithmeticCodeModule(), new MathCrosswordModule(),
+                new ProductGridModule(), new WordPathModule()]));
         foreach (var selection in EveryVariant)
         {
             var book = generator.Generate(new("Test", "Test", null, 180, 314159, [selection]));

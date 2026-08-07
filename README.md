@@ -1,6 +1,6 @@
 # Mały Bystrzak
 
-„Mały Bystrzak” to działający bez backendu generator drukowanych książeczek z zadaniami dla dzieci w wieku 7–10 lat. Aplikacja obsługuje Sudoku 4×4 i 6×6, Kakuro 3×3 i 4×4, labirynty 9×9 i 15×15 oraz nonogramy 5×5, 7×7 i 10×10. Pozwala tworzyć książeczki mieszane z sześcioma poziomami trudności, wynikiem poznawczym 0–100 i odtwarzalnym ziarnem.
+„Mały Bystrzak” to działający bez backendu generator drukowanych książeczek z zadaniami dla dzieci w wieku 7–10 lat. Oprócz Sudoku, Kakuro, labiryntów i nonogramów zawiera równania obrazkowe, szyfry działań, krzyżówki matematyczne, tabele iloczynów i ścieżki literowe. Pozwala tworzyć książeczki mieszane z sześcioma poziomami trudności, wynikiem poznawczym 0–100 i odtwarzalnym ziarnem.
 
 Docelowy adres aplikacji: <https://malybystrzak.pl/>
 
@@ -8,7 +8,7 @@ Docelowy adres aplikacji: <https://malybystrzak.pl/>
 
 - podgląd PDF A5 w naturalnej kolejności;
 - broszura PDF A4 z impozycją do druku dwustronnego;
-- sześcioslotowy układ strony; Nonogram 7×7 i 10×10 oraz Labirynt 15×15 zajmują po cztery sloty;
+- elastyczny układ strony: od sześciu małych zadań po jedno czytelne zadanie pełnostronicowe;
 - raport trudności dostępny bezpośrednio w aplikacji;
 - personalizacja tytułu, podtytułu i imienia dziecka;
 - zakres wyniku trudności i względne gwiazdki;
@@ -27,6 +27,7 @@ Wynik trudności 0–100 jest normalizowany percentylowo osobno dla każdego war
 - `MalyBystrzak.Modules.Kakuro` — generator i solver Kakuro;
 - `MalyBystrzak.Modules.Mazes` — generator doskonałych labiryntów z jednym rozwiązaniem;
 - `MalyBystrzak.Modules.Nonograms` — generator i solver jednoznacznych nonogramów;
+- `MalyBystrzak.Modules.Educational` — równania obrazkowe, szyfry, krzyżówki matematyczne, tabele iloczynów i ścieżki literowe;
 - `MalyBystrzak.Pdf` — wspólny renderer PDFsharp Core dla CLI i Web;
 - `MalyBystrzak.Cli` — interfejs konsolowy korzystający z tych samych modułów i PDF;
 - `MalyBystrzak.Web` — samodzielna aplikacja Blazor WebAssembly PWA;
@@ -70,6 +71,16 @@ Nonogram 10×10:
 
 ```powershell
 dotnet run --project src/MalyBystrzak.Cli -- nonogram --count 18 --size 10 --output ./output/nonogramy
+```
+
+Nowe zagadki edukacyjne:
+
+```bash
+dotnet run --project src/MalyBystrzak.Cli -- pictures --count 12 --output ./output/obrazki
+dotnet run --project src/MalyBystrzak.Cli -- code --count 12 --output ./output/szyfry
+dotnet run --project src/MalyBystrzak.Cli -- crossword --count 6 --output ./output/krzyzowki
+dotnet run --project src/MalyBystrzak.Cli -- products --count 6 --output ./output/iloczyny
+dotnet run --project src/MalyBystrzak.Cli -- word-path --count 12 --output ./output/sciezki
 ```
 
 Książeczka mieszana:

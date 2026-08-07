@@ -178,7 +178,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         var contentX = page.X + 16;
         var contentY = page.Y + 38;
         var cardWidth = (page.Width - 32 - gap) / 2;
-        var cardHeight = (page.Height - 72 - gap * 2) / 3;
+        var cardHeight = (page.Height - 72 - gap * 5) / 6;
         foreach (var placement in placements)
         {
             var card = new XRect(contentX + placement.Column * (cardWidth + gap),
@@ -277,11 +277,17 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
 
         DrawCentered(graphics, "Jak rozwiązywać zagadki?", 15, true, "#25316d",
             page.X + 42, page.Y + 188, page.Width - 84, 28, settings.InkSavingMode);
-        var ruleY = page.Y + 215;
-        foreach (var instruction in instructions)
+        var compactRules = instructions.Count > 6;
+        var columns = compactRules ? 2 : 1;
+        var ruleWidth = compactRules ? (page.Width - 92) / 2 : page.Width - 84;
+        for (var index = 0; index < instructions.Count; index++)
         {
-            DrawRuleCard(graphics, page, ruleY, instruction, settings.InkSavingMode);
-            ruleY += 54;
+            var column = index % columns;
+            var row = index / columns;
+            var x = page.X + 42 + column * (ruleWidth + 8);
+            var y = page.Y + 215 + row * (compactRules ? 48 : 54);
+            DrawRuleCard(graphics, new XRect(x, y, ruleWidth, compactRules ? 41 : 46),
+                instructions[index], settings.InkSavingMode, compactRules);
         }
 
         DrawCentered(graphics, "Stwórz kolejną książeczkę:", 9, true, "#25316d",
@@ -292,14 +298,15 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
             page.X + 35, page.Bottom - 56, page.Width - 70, 20, settings.InkSavingMode);
     }
 
-    private static void DrawRuleCard(XGraphics graphics, XRect page, double y, WorksheetInstruction instruction, bool inkSavingMode)
+    private static void DrawRuleCard(XGraphics graphics, XRect card, WorksheetInstruction instruction,
+        bool inkSavingMode, bool compact)
     {
-        var card = new XRect(page.X + 42, y, page.Width - 84, 46);
         graphics.DrawRoundedRectangle(new XPen(Color(instruction.Accent, inkSavingMode), 1.2), card, new XSize(5, 5));
         if (!inkSavingMode) graphics.DrawRectangle(Brush(instruction.Accent), card.X, card.Y, 7, card.Height);
-        graphics.DrawString(instruction.Title, Font(8.5, true), Brush("#25316d", inkSavingMode), new XPoint(card.X + 19, card.Y + 14));
-        graphics.DrawString(instruction.FirstLine, Font(6.3), Brush("#25316d", inkSavingMode), new XPoint(card.X + 19, card.Y + 28));
-        graphics.DrawString(instruction.SecondLine, Font(6.3), Brush("#25316d", inkSavingMode), new XPoint(card.X + 19, card.Y + 39));
+        var left = card.X + (compact ? 12 : 19);
+        graphics.DrawString(instruction.Title, Font(compact ? 6.2 : 8.5, true), Brush("#25316d", inkSavingMode), new XPoint(left, card.Y + 12));
+        graphics.DrawString(instruction.FirstLine, Font(compact ? 4.1 : 6.3), Brush("#25316d", inkSavingMode), new XPoint(left, card.Y + 25));
+        graphics.DrawString(instruction.SecondLine, Font(compact ? 4.1 : 6.3), Brush("#25316d", inkSavingMode), new XPoint(left, card.Y + 35));
     }
 
     private static void DrawCentered(XGraphics graphics, string value, double size, bool bold, string color,

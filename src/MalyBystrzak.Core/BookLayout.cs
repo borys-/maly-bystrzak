@@ -19,25 +19,9 @@ public static class BookLayout
         IReadOnlyList<WorksheetLayout> selectionCycle)
     {
         if (count <= 0 || selectionCycle.Count == 0) return new(0, 0, 0);
-        var large = Enumerable.Range(0, count)
-            .Count(index => selectionCycle[index % selectionCycle.Count] == WorksheetLayout.Large);
-        var standard = count - large;
-        var originalLarge = large;
-        var originalStandard = standard;
-        var pages = 0;
-        var pairedLarge = Math.Min(large, standard / 2);
-        pages += pairedLarge;
-        large -= pairedLarge;
-        standard -= pairedLarge * 2;
-        pages += standard / 6;
-        standard %= 6;
-        if (large > 0)
-        {
-            pages += large;
-            standard = 0;
-        }
-        if (standard > 0) pages++;
-        return new(pages, originalStandard + originalLarge * 4, pages * 6);
+        var layouts = Enumerable.Range(0, count).Select(index => selectionCycle[index % selectionCycle.Count]).ToArray();
+        var pages = PackLayouts(layouts);
+        return new(pages, layouts.Sum(LayoutWeight), pages * 6);
     }
 
     public static int? FindNextFullPageCount(int currentCount, IReadOnlyList<WorksheetLayout> selectionCycle,
@@ -46,11 +30,8 @@ public static class BookLayout
         if (selectionCycle.Count == 0) return null;
         for (var candidate = currentCount + 1; candidate <= maximumCount; candidate++)
         {
-            var large = Enumerable.Range(0, candidate)
-                .Count(index => selectionCycle[index % selectionCycle.Count] == WorksheetLayout.Large);
-            var standard = candidate - large;
-            if (standard >= large * 2 && (standard - large * 2) % 6 == 0)
-                return candidate;
+            var estimate = EstimateWorksheetPages(candidate, selectionCycle);
+            if (estimate.FreeSlots == 0) return candidate;
         }
         return null;
     }
@@ -61,13 +42,9 @@ public static class BookLayout
         if (selectionCycle.Count == 0 || targetPageCount <= 0) return null;
         for (var candidate = currentCount + 1; candidate <= maximumCount; candidate++)
         {
-            var large = Enumerable.Range(0, candidate)
-                .Count(index => selectionCycle[index % selectionCycle.Count] == WorksheetLayout.Large);
-            var standard = candidate - large;
-            if (standard < large * 2 || (standard - large * 2) % 6 != 0) continue;
-            var pages = large + (standard - large * 2) / 6;
-            if (pages == targetPageCount) return candidate;
-            if (pages > targetPageCount) return null;
+            var estimate = EstimateWorksheetPages(candidate, selectionCycle);
+            if (estimate.PageCount == targetPageCount && estimate.FreeSlots == 0) return candidate;
+            if (estimate.PageCount > targetPageCount) return null;
         }
         return null;
     }
@@ -75,27 +52,7 @@ public static class BookLayout
     public static IReadOnlyList<GeneratedWorksheet> ArrangeForFullPages(
         IReadOnlyList<GeneratedWorksheet> worksheets)
     {
-        var large = new Queue<GeneratedWorksheet>(worksheets.Where(item => item.Layout == WorksheetLayout.Large));
-        var standard = new Queue<GeneratedWorksheet>(worksheets.Where(item => item.Layout == WorksheetLayout.Standard));
-        var arranged = new List<GeneratedWorksheet>(worksheets.Count);
-
-        while (large.Count > 0 && standard.Count >= 2)
-        {
-            arranged.Add(large.Dequeue());
-            arranged.Add(standard.Dequeue());
-            arranged.Add(standard.Dequeue());
-        }
-        while (standard.Count >= 6)
-            for (var slot = 0; slot < 6; slot++) arranged.Add(standard.Dequeue());
-
-        while (large.Count > 0)
-        {
-            arranged.Add(large.Dequeue());
-            for (var slot = 0; slot < 2 && standard.Count > 0; slot++) arranged.Add(standard.Dequeue());
-        }
-        while (standard.Count > 0) arranged.Add(standard.Dequeue());
-
-        return arranged;
+        return worksheets.OrderByDescending(item => LayoutWeight(item.Layout)).ToArray();
     }
 
     public static IReadOnlyList<BookPage> BuildPages(IReadOnlyList<GeneratedWorksheet> worksheets, bool includeSolutions = true)
@@ -116,40 +73,89 @@ public static class BookLayout
     public static IReadOnlyList<IReadOnlyList<WorksheetPlacement>> PackWorksheets(
         IReadOnlyList<GeneratedWorksheet> worksheets)
     {
-        var pages = new List<IReadOnlyList<WorksheetPlacement>>();
-        var placements = new List<WorksheetPlacement>();
-        var occupied = new bool[3, 2];
+        var pagePlacements = new List<List<WorksheetPlacement>>();
+        var pageOccupancy = new List<bool[,]>();
         foreach (var worksheet in worksheets)
         {
-            var span = worksheet.Layout == WorksheetLayout.Large ? 2 : 1;
-            if (!TryPlace(worksheet, span, occupied, placements))
+            var (columnSpan, rowSpan) = LayoutSpan(worksheet.Layout);
+            var placed = false;
+            for (var pageIndex = 0; pageIndex < pagePlacements.Count && !placed; pageIndex++)
+                placed = TryPlace(worksheet, columnSpan, rowSpan, pageOccupancy[pageIndex], pagePlacements[pageIndex]);
+            if (!placed)
             {
-                pages.Add(placements.ToArray());
-                placements = [];
-                occupied = new bool[3, 2];
-                if (!TryPlace(worksheet, span, occupied, placements))
+                var occupied = new bool[6, 2];
+                var placements = new List<WorksheetPlacement>();
+                if (!TryPlace(worksheet, columnSpan, rowSpan, occupied, placements))
                     throw new InvalidOperationException("Zadanie nie mieści się na stronie książeczki.");
+                pageOccupancy.Add(occupied);
+                pagePlacements.Add(placements);
             }
         }
-        if (placements.Count > 0) pages.Add(placements.ToArray());
-        return pages;
+        return pagePlacements.Select(page => (IReadOnlyList<WorksheetPlacement>)page.ToArray()).ToArray();
     }
 
-    private static bool TryPlace(GeneratedWorksheet worksheet, int span, bool[,] occupied,
+    private static bool TryPlace(GeneratedWorksheet worksheet, int columnSpan, int rowSpan, bool[,] occupied,
         ICollection<WorksheetPlacement> placements)
     {
-        for (var row = 0; row <= 3 - span; row++)
-        for (var column = 0; column <= 2 - span; column++)
+        for (var row = 0; row <= 6 - rowSpan; row++)
+        for (var column = 0; column <= 2 - columnSpan; column++)
         {
             var available = true;
-            for (var checkedRow = row; checkedRow < row + span; checkedRow++)
-            for (var checkedColumn = column; checkedColumn < column + span; checkedColumn++)
+            for (var checkedRow = row; checkedRow < row + rowSpan; checkedRow++)
+            for (var checkedColumn = column; checkedColumn < column + columnSpan; checkedColumn++)
                 available &= !occupied[checkedRow, checkedColumn];
             if (!available) continue;
-            for (var occupiedRow = row; occupiedRow < row + span; occupiedRow++)
-            for (var occupiedColumn = column; occupiedColumn < column + span; occupiedColumn++)
+            for (var occupiedRow = row; occupiedRow < row + rowSpan; occupiedRow++)
+            for (var occupiedColumn = column; occupiedColumn < column + columnSpan; occupiedColumn++)
                 occupied[occupiedRow, occupiedColumn] = true;
-            placements.Add(new(worksheet, column, row, span, span));
+            placements.Add(new(worksheet, column, row, columnSpan, rowSpan));
+            return true;
+        }
+        return false;
+    }
+
+    private static (int Columns, int Rows) LayoutSpan(WorksheetLayout layout) => layout switch
+    {
+        WorksheetLayout.Standard => (1, 2),
+        WorksheetLayout.Large => (2, 4),
+        WorksheetLayout.HalfPage => (2, 3),
+        WorksheetLayout.FullPage => (2, 6),
+        _ => throw new ArgumentOutOfRangeException(nameof(layout))
+    };
+
+    private static int LayoutWeight(WorksheetLayout layout) => layout switch
+    {
+        WorksheetLayout.Standard => 1,
+        WorksheetLayout.Large => 4,
+        WorksheetLayout.HalfPage => 3,
+        WorksheetLayout.FullPage => 6,
+        _ => 0
+    };
+
+    private static int PackLayouts(IReadOnlyList<WorksheetLayout> layouts)
+    {
+        var pages = new List<bool[,]>();
+        foreach (var layout in layouts.OrderByDescending(LayoutWeight))
+        {
+            var (columns, rows) = LayoutSpan(layout);
+            if (pages.Any(page => TryPlaceLayout(columns, rows, page))) continue;
+            var occupied = new bool[6, 2];
+            _ = TryPlaceLayout(columns, rows, occupied); pages.Add(occupied);
+        }
+        return pages.Count;
+    }
+
+    private static bool TryPlaceLayout(int columnSpan, int rowSpan, bool[,] occupied)
+    {
+        for (var row = 0; row <= 6 - rowSpan; row++)
+        for (var column = 0; column <= 2 - columnSpan; column++)
+        {
+            var available = true;
+            for (var y = row; y < row + rowSpan; y++)
+            for (var x = column; x < column + columnSpan; x++) available &= !occupied[y, x];
+            if (!available) continue;
+            for (var y = row; y < row + rowSpan; y++)
+            for (var x = column; x < column + columnSpan; x++) occupied[y, x] = true;
             return true;
         }
         return false;

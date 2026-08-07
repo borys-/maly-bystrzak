@@ -44,7 +44,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
 
         using var manifest = JsonDocument.Parse(await client.GetStringAsync($"{server.BaseUrl}/manifest.webmanifest"));
         Assert.Equal("pl-PL", manifest.RootElement.GetProperty("lang").GetString());
-        Assert.Contains("Sudoku", manifest.RootElement.GetProperty("description").GetString());
+        Assert.Contains("łamigłówkami", manifest.RootElement.GetProperty("description").GetString());
 
         var image = await client.GetByteArrayAsync($"{server.BaseUrl}/og-maly-bystrzak.png");
         Assert.True(image.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }));
@@ -74,6 +74,8 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("variant-maze-9x9")).ToBeVisibleAsync();
         await Expect(Page.GetByTestId("variant-nonogram-5x5")).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId("variant-picture-equations-animals")).ToBeVisibleAsync();
+        await Expect(Page.GetByTestId("variant-word-path-5x4")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Nie masz jeszcze zapisanych projektów.")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Karty pracy dla rodziców i nauczycieli" })).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Najczęstsze pytania" })).ToBeVisibleAsync();
@@ -92,7 +94,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
 
         var advice = Page.GetByTestId("layout-advice");
         await Expect(advice).ToContainTextAsync("75%");
-        await Expect(advice).ToContainTextAsync("co najmniej 3 małe warianty");
+        await Expect(advice).ToContainTextAsync("nie wypełniają całej strony");
         await Expect(Page.GetByTestId("apply-layout-suggestion")).ToHaveCountAsync(0);
     }
 
@@ -133,6 +135,24 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         await Page.WaitForTimeoutAsync(100);
         var solutions = await Page.RunAndWaitForDownloadAsync(() => Page.GetByTestId("download-solutions").ClickAsync());
         Assert.Equal("maly-bystrzak-rozwiazania-a5.pdf", solutions.SuggestedFilename);
+    }
+
+    [Fact]
+    public async Task GeneratesEveryNewEducationalPuzzleType()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.GetByTestId("variant-sudoku-4x4").ClickAsync();
+        foreach (var variant in new[] { "picture-equations-animals", "arithmetic-code-six-letter",
+                     "math-crossword-chain", "product-grid-3x3", "word-path-5x4" })
+            await Page.GetByTestId($"variant-{variant}").ClickAsync();
+        await Page.GetByLabel("Liczba zadań").FillAsync("5");
+        await Page.GetByTestId("generate").ClickAsync();
+
+        await Expect(Page.GetByTestId("result")).ToContainTextAsync("5 zadań", new() { Timeout = 60_000 });
+        await Expect(Page.GetByText("Równania obrazkowe", new() { Exact = true })).ToBeVisibleAsync();
+        await Expect(Page.Locator(".preview-card.layout-fullpage")).ToHaveCountAsync(1);
+        await Page.GetByTestId("preview-next").ClickAsync();
+        await Expect(Page.Locator(".preview-card svg")).ToHaveCountAsync(1);
     }
 
     [Fact]

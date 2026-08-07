@@ -14,9 +14,9 @@
     <div class="hero-copy">
         <span class="eyebrow">NAUKA, KTÓRA TRAFIA NA PAPIER</span>
         <h1>Stwórz łamigłówki dla dzieci<br /><em>do druku w PDF.</em></h1>
-        <p>Ułóż bezpłatną książeczkę z Sudoku, Kakuro, labiryntami i nonogramami. Wybierz poziom i pobierz gotowe karty pracy — bez konta i wysyłania danych.</p>
+        <p>Ułóż bezpłatną książeczkę z Sudoku, łamigłówkami matematycznymi, szyframi, labiryntami i zadaniami słownymi. Wybierz poziom i pobierz gotowe karty pracy — bez konta i wysyłania danych.</p>
         <div class="hero-pills" aria-label="Najważniejsze możliwości">
-            <span>Sudoku i Kakuro</span><span>Labirynty</span><span>Nonogramy 5×5–10×10</span><span>Gotowa broszura A4</span>
+            <span>Sudoku i Kakuro</span><span>Zagadki matematyczne</span><span>Szyfry i ścieżki słowne</span><span>Gotowa broszura A4</span>
         </div>
     </div>
     <div class="hero-art" aria-hidden="true">
@@ -74,7 +74,7 @@
                             }
                             else
                             {
-                                <small>Duże zadanie zajmuje 4 z 6 pól strony i potrzebuje obok dwóch małych. Zaznacz jeszcze co najmniej @advice.MissingSmallVariants @(advice.MissingSmallVariants == 1 ? "mały wariant" : "małe warianty") albo wybierz mniej dużych.</small>
+                                <small>Wybrane rozmiary zadań nie wypełniają całej strony przy tej liczbie. Dodaj zadania albo zmień zestaw typów.</small>
                             }
                         </div>
                         @if (advice.SuggestedCount is { } targetCount)
@@ -142,7 +142,7 @@
                     @foreach (var placement in PreviewItems)
                     {
                         var item = placement.Worksheet;
-                        <article class="preview-card @(item.Layout == WorksheetLayout.Large ? "large" : null)"
+                        <article class="preview-card @(item.Layout == WorksheetLayout.Standard ? null : "large") layout-@item.Layout.ToString().ToLowerInvariant()"
                                  style="grid-column:@(placement.Column + 1) / span @placement.ColumnSpan; grid-row:@(placement.Row + 1) / span @placement.RowSpan">
                             <header>
                                 <strong>Nr @item.Number</strong><span>@item.TypeName</span>

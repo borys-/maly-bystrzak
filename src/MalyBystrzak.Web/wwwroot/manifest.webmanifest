@@ -1,7 +1,7 @@
 {
   "name": "Mały Bystrzak — generator książeczek",
   "short_name": "Mały Bystrzak",
-  "description": "Bezpłatny generator książeczek i kart pracy z Sudoku, Kakuro, labiryntami i nonogramami dla dzieci.",
+  "description": "Bezpłatny generator książeczek i kart pracy z łamigłówkami matematycznymi, logicznymi i słownymi dla dzieci.",
   "lang": "pl-PL",
   "dir": "ltr",
   "id": "./",
