@@ -1,6 +1,4 @@
-using MalyBystrzak.Core;
-
-namespace MalyBystrzak.Pdf;
+namespace MalyBystrzak.Core;
 
 public interface IBookPdfRenderer
 {

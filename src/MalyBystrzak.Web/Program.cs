@@ -6,7 +6,6 @@ using MalyBystrzak.Modules.Kakuro;
 using MalyBystrzak.Modules.Mazes;
 using MalyBystrzak.Modules.Nonograms;
 using MalyBystrzak.Modules.Sudoku;
-using MalyBystrzak.Pdf;
 using MalyBystrzak.Web.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -20,7 +19,7 @@ builder.Services.AddSingleton<IWorksheetModule, MazeModule>();
 builder.Services.AddSingleton<IWorksheetModule, NonogramModule>();
 builder.Services.AddSingleton(sp => new WorksheetModuleRegistry(sp.GetServices<IWorksheetModule>()));
 builder.Services.AddSingleton<BookGenerator>();
-builder.Services.AddSingleton<IBookPdfRenderer, BookPdfRenderer>();
+builder.Services.AddSingleton<PdfExportService>();
 builder.Services.AddScoped<IProjectStore, BrowserProjectStore>();
 
 await builder.Build().RunAsync();

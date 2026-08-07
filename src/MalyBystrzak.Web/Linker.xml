@@ -1,0 +1,5 @@
+<linker>
+  <assembly fullname="MalyBystrzak.Pdf">
+    <type fullname="MalyBystrzak.Pdf.BookPdfRenderer" preserve="all" />
+  </assembly>
+</linker>

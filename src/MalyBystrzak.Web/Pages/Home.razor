@@ -4,7 +4,7 @@
 @using MalyBystrzak.Web.Components
 @inject BookGenerator Generator
 @inject WorksheetModuleRegistry Registry
-@inject IBookPdfRenderer PdfRenderer
+@inject PdfExportService PdfExporter
 @inject IProjectStore ProjectStore
 @inject IJSRuntime JS
 
@@ -206,6 +206,12 @@
         await RefreshProjectsAsync();
     }
 
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) _ = PdfExporter.WarmUpAsync();
+        return Task.CompletedTask;
+    }
+
     private async Task GenerateAsync()
     {
         error = message = null;
@@ -263,7 +269,7 @@
         try
         {
             var document = source ?? book.CreateDocument();
-            var bytes = booklet ? PdfRenderer.RenderBooklet(document) : PdfRenderer.RenderPreview(document);
+            var bytes = await PdfExporter.RenderAsync(document, booklet);
             await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", name, "application/pdf", bytes);
         }
         catch (Exception exception) { error = $"Nie udało się utworzyć PDF: {exception.Message}"; }

@@ -24,6 +24,17 @@
 
   <ItemGroup>
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.BarCodes.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.Charting.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.Cryptography.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.Quality.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.Shared.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.Snippets.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.System.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="PdfSharp.WPFonts.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="MalyBystrzak.Pdf.wasm" />
+    <TrimmerRootDescriptor Include="Linker.xml" />
   </ItemGroup>
 
 </Project>
