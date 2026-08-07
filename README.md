@@ -104,7 +104,7 @@ pwsh tests/MalyBystrzak.Web.E2E/bin/Release/net8.0/playwright.ps1 install chromi
 dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
 ```
 
-Lokalny test wydajności mierzy start, generowanie 36 mieszanych zadań, eksport PDF i zapis projektu:
+Lokalny test wydajności mierzy generowanie 108 zadań ze wszystkich wariantów oraz eksport podglądu PDF A5:
 
 ```powershell
 ./testuj-wydajnosc.bat

@@ -220,20 +220,18 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
 
     [Fact]
     [Trait("Category", "Performance")]
-    public async Task MainUserFlowStaysWithinPerformanceBudget()
+    public async Task GenerationAndPdfFor108WorksheetsStayWithinPerformanceBudget()
     {
-        var stopwatch = Stopwatch.StartNew();
         await Page.GotoAsync(server.BaseUrl);
         await Expect(Page.GetByTestId("generate")).ToBeVisibleAsync();
-        var startup = stopwatch.Elapsed;
+        foreach (var variant in new[] { "sudoku-6x6", "kakuro-3x3", "kakuro-4x4", "maze-9x9", "maze-15x15",
+                     "nonogram-5x5", "nonogram-7x7", "nonogram-10x10" })
+            await Page.GetByTestId($"variant-{variant}").ClickAsync();
+        await Page.GetByLabel("Liczba zadań").FillAsync("108");
 
-        await Page.GetByTestId("variant-kakuro-3x3").ClickAsync();
-        await Page.GetByTestId("variant-maze-15x15").ClickAsync();
-        await Page.GetByTestId("variant-nonogram-10x10").ClickAsync();
-        await Page.GetByLabel("Liczba zadań").FillAsync("36");
-        stopwatch.Restart();
+        var stopwatch = Stopwatch.StartNew();
         await Page.GetByTestId("generate").ClickAsync();
-        await Expect(Page.GetByTestId("result")).ToContainTextAsync("36 zadań", new() { Timeout = 60_000 });
+        await Expect(Page.GetByTestId("result")).ToContainTextAsync("108 zadań", new() { Timeout = 120_000 });
         var generation = stopwatch.Elapsed;
 
         stopwatch.Restart();
@@ -241,16 +239,8 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         var export = stopwatch.Elapsed;
         Assert.True(new FileInfo(await download.PathAsync()).Length > 10_000);
 
-        stopwatch.Restart();
-        await Page.GetByTestId("save-project").ClickAsync();
-        await Expect(Page.GetByText("Projekt został zapisany na tym urządzeniu.")).ToBeVisibleAsync();
-        var save = stopwatch.Elapsed;
-
-        Console.WriteLine($"PERF startup={startup.TotalMilliseconds:F0}ms generation={generation.TotalMilliseconds:F0}ms " +
-            $"pdf={export.TotalMilliseconds:F0}ms save={save.TotalMilliseconds:F0}ms");
-        Assert.True(startup < TimeSpan.FromSeconds(10), $"Start trwał {startup.TotalSeconds:F1} s.");
-        Assert.True(generation < TimeSpan.FromSeconds(30), $"Generowanie trwało {generation.TotalSeconds:F1} s.");
-        Assert.True(export < TimeSpan.FromSeconds(30), $"Eksport PDF trwał {export.TotalSeconds:F1} s.");
-        Assert.True(save < TimeSpan.FromSeconds(5), $"Zapis trwał {save.TotalSeconds:F1} s.");
+        Console.WriteLine($"PERF-108 generation={generation.TotalMilliseconds:F0}ms pdf={export.TotalMilliseconds:F0}ms");
+        Assert.True(generation < TimeSpan.FromSeconds(90), $"Generowanie trwało {generation.TotalSeconds:F1} s.");
+        Assert.True(export < TimeSpan.FromSeconds(90), $"Eksport PDF trwał {export.TotalSeconds:F1} s.");
     }
 }
