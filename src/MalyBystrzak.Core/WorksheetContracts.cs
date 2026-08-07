@@ -31,11 +31,12 @@ public sealed record VisualText(double X, double Y, string Text, double Size, st
     bool Bold = false, string Anchor = "middle") : VisualElement;
 public sealed record WorksheetVisual(double Width, double Height, IReadOnlyList<VisualElement> Elements);
 public sealed record WorksheetInstruction(string Title, string FirstLine, string SecondLine, string Accent);
+public enum WorksheetLayout { Standard, Large }
 
 public sealed record GeneratedWorksheet(
     int Number, string ModuleId, string VariantId, string TypeName, string Fingerprint,
     CognitiveDifficulty Difficulty, int DisplayStars, WorksheetVisual Task, WorksheetVisual Solution,
-    WorksheetInstruction Instruction);
+    WorksheetInstruction Instruction, WorksheetLayout Layout = WorksheetLayout.Standard);
 
 public interface IWorksheetModule
 {

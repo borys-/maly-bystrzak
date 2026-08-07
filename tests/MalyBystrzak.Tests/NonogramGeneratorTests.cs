@@ -6,6 +6,16 @@ namespace MalyBystrzak.Tests;
 public class NonogramGeneratorTests
 {
     [Theory]
+    [InlineData("5x5", WorksheetLayout.Standard)]
+    [InlineData("7x7", WorksheetLayout.Large)]
+    [InlineData("10x10", WorksheetLayout.Large)]
+    public void VariantRequestsExpectedLayout(string variant, WorksheetLayout expected)
+    {
+        var worksheet = Assert.Single(new NonogramModule().Generate(new(variant, 1, 42)));
+        Assert.Equal(expected, worksheet.Layout);
+    }
+
+    [Theory]
     [InlineData(5)]
     [InlineData(7)]
     [InlineData(10)]

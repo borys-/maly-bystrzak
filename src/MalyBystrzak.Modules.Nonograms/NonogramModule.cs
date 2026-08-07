@@ -37,7 +37,8 @@ public sealed class NonogramModule : IWorksheetModule
             progress?.Report(new(index + 1, request.Count, $"Nonogramy: {index + 1}/{request.Count}"));
             var difficulty = puzzle.Difficulty;
             return new GeneratedWorksheet(puzzle.Number, Id, request.VariantId, $"Nonogram {size}x{size}", Fingerprint(puzzle),
-                difficulty, difficulty.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true), ModuleInstruction);
+                difficulty, difficulty.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true), ModuleInstruction,
+                size >= 7 ? WorksheetLayout.Large : WorksheetLayout.Standard);
         }).ToArray();
     }
 

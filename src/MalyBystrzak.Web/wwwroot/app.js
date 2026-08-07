@@ -34,7 +34,7 @@ window.malyBystrzakStore = (() => {
         try {
           const document = JSON.parse(row.document);
           const summary = JSON.parse(row.summary);
-          return document.schemaVersion === 4 ? [summary] : [];
+          return document.schemaVersion === 5 ? [summary] : [];
         } catch {
           return [];
         }

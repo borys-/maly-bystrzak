@@ -19,7 +19,7 @@ public sealed record GeneratorProject(
     DateTimeOffset UpdatedAt,
     GeneratedBook Book)
 {
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 }
 
 public sealed record ProjectSummary(Guid Id, string Name, DateTimeOffset UpdatedAt, int WorksheetCount);

@@ -36,7 +36,8 @@ public sealed class MazeModule : IWorksheetModule
             progress?.Report(new(index + 1, request.Count, $"Labirynty: {index + 1}/{request.Count}"));
             var difficulty = puzzle.Difficulty;
             return new GeneratedWorksheet(puzzle.Number, Id, request.VariantId, $"Labirynt {size}x{size}", Fingerprint(puzzle),
-                difficulty, difficulty.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true), ModuleInstruction);
+                difficulty, difficulty.Stars, CreateVisual(puzzle, false), CreateVisual(puzzle, true), ModuleInstruction,
+                size == 15 ? WorksheetLayout.Large : WorksheetLayout.Standard);
         }).ToArray();
     }
 

@@ -5,6 +5,13 @@ namespace MalyBystrzak.Tests;
 
 public class MazeGeneratorTests
 {
+    [Fact]
+    public void LargeMazeRequestsLargeLayout()
+    {
+        var worksheet = Assert.Single(new MazeModule().Generate(new("15x15", 1, 42)));
+        Assert.Equal(WorksheetLayout.Large, worksheet.Layout);
+    }
+
     [Theory]
     [InlineData(9)]
     [InlineData(15)]
