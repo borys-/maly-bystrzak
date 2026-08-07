@@ -106,7 +106,7 @@ public sealed class WordPathModule : IWorksheetModule
     {
         var e = new List<VisualElement>();
         var cell = puzzle.Columns switch { 5 => 13d, 6 => 11d, _ => 9.5d };
-        const double x0 = 42; const double y0 = 8;
+        const double x0 = 2; const double y0 = 12;
         for (var row = 0; row < puzzle.Rows; row++) for (var column = 0; column < puzzle.Columns; column++)
         {
             var point = new GridPoint(row, column); var pathIndex = puzzle.Path.IndexOf(point);
@@ -118,21 +118,27 @@ public sealed class WordPathModule : IWorksheetModule
                 5.5, 5.5, "none", "#f15a8a", 1.1));
         }
         var arrows = puzzle.Path.Zip(puzzle.Path.Skip(1), (a, b) => b.Row < a.Row ? "↑" : b.Row > a.Row ? "↓" : b.Column < a.Column ? "←" : "→").ToArray();
-        e.Add(PuzzleSupport.Text(2, 10, "1. START", 4.2, true, "#f15a8a", "start"));
-        e.Add(PuzzleSupport.Text(2, 17, "różowe pole", 3.2, false, "#6b7280", "start"));
-        e.Add(PuzzleSupport.Text(2, 30, "2. KOD STRZAŁEK", 3.6, true, "#25316d", "start"));
-        e.Add(PuzzleSupport.Text(2, 42, string.Join(' ', arrows.Take(4)), 4.5, true, "#25316d", "start"));
-        e.Add(PuzzleSupport.Text(2, 53, string.Join(' ', arrows.Skip(4).Take(4)), 4.5, true, "#25316d", "start"));
-        e.Add(PuzzleSupport.Text(2, 64, string.Join(' ', arrows.Skip(8)), 4.5, true, "#25316d", "start"));
-        e.Add(PuzzleSupport.Text(2, 77, "3. HASŁO", 4.2, true, "#19a88e", "start"));
-        PuzzleSupport.AnswerBox(e, 2, 82, 34, 16, solution ? puzzle.Word : null);
+        var start = puzzle.Path[0];
+        e.Add(PuzzleSupport.Text(x0 + start.Column * cell + cell / 2, 8, "START", 3.8, true, "#f15a8a"));
+        const double panelCenter = 108;
+        e.Add(PuzzleSupport.Text(panelCenter, 15, "KOD STRZAŁEK", 3.8, true, "#25316d"));
+        e.Add(PuzzleSupport.Text(panelCenter, 29, string.Join(' ', arrows.Take(4)), 5, true, "#25316d"));
+        e.Add(PuzzleSupport.Text(panelCenter, 41, string.Join(' ', arrows.Skip(4).Take(4)), 5, true, "#25316d"));
+        e.Add(PuzzleSupport.Text(panelCenter, 53, string.Join(' ', arrows.Skip(8)), 5, true, "#25316d"));
+        e.Add(PuzzleSupport.Text(panelCenter, 68, "WPISZ HASŁO", 4, true, "#19a88e"));
+        const double answerAreaX = 76; const double answerAreaWidth = 64; const double gap = 1;
+        var boxWidth = Math.Min(9, (answerAreaWidth - gap * (puzzle.Word.Length - 1)) / puzzle.Word.Length);
+        var boxesWidth = puzzle.Word.Length * boxWidth + (puzzle.Word.Length - 1) * gap;
+        var boxesX = answerAreaX + (answerAreaWidth - boxesWidth) / 2;
+        for (var index = 0; index < puzzle.Word.Length; index++)
+            PuzzleSupport.AnswerBox(e, boxesX + index * (boxWidth + gap), 74, boxWidth, 15,
+                solution ? puzzle.Word[index].ToString() : null);
         if (solution)
         {
-            var start = puzzle.Path[0];
             e.Add(new VisualEllipse(x0 + start.Column * cell + cell / 2, y0 + start.Row * cell + cell / 2,
                 5, 5, "none", "#f15a8a", 1.2));
         }
-        return new(112, 102, e);
+        return new(142, 94, e);
     }
 
     private static (int Columns, int Rows, WorksheetLayout Layout)? Dimensions(string variantId) => variantId switch
