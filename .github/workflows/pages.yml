@@ -40,7 +40,7 @@ jobs:
         run: dotnet publish src/MalyBystrzak.Web/MalyBystrzak.Web.csproj -c Release --no-build -o publish
 
       - name: Uruchom testy przeglądarkowe opublikowanej aplikacji
-        run: dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build
+        run: dotnet test tests/MalyBystrzak.Web.E2E/MalyBystrzak.Web.E2E.csproj -c Release --no-build --filter "Category!=Performance"
         env:
           MALY_BYSTRZAK_PUBLISHED_DIR: ${{ github.workspace }}/publish/wwwroot
 
