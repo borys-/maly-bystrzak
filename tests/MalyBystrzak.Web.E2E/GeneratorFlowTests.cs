@@ -54,6 +54,24 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     }
 
     [Fact]
+    public async Task LargePuzzleOccupiesTwoColumnsAndRows()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        await Page.GetByTestId("variant-nonogram-7x7").ClickAsync();
+        await Page.GetByLabel("Liczba zadań").FillAsync("2");
+        await Page.GetByTestId("generate").ClickAsync();
+        await Expect(Page.GetByTestId("result")).ToContainTextAsync("2 zadań", new() { Timeout = 60_000 });
+
+        var standardBox = await Page.Locator(".preview-card:not(.large)").BoundingBoxAsync();
+        var largeBox = await Page.Locator(".preview-card.large").BoundingBoxAsync();
+
+        Assert.NotNull(standardBox);
+        Assert.NotNull(largeBox);
+        Assert.True(largeBox.Width > standardBox.Width * 1.8);
+        Assert.True(largeBox.Height > standardBox.Height * 1.8);
+    }
+
+    [Fact]
     public async Task SavesProjectInIndexedDb()
     {
         await Page.GotoAsync(server.BaseUrl);

@@ -111,9 +111,11 @@
                     <span data-testid="preview-page-label">Strona @(previewPage + 1) z @PreviewPageCount</span>
                 </div>
                 <div class="preview-grid">
-                    @foreach (var item in PreviewItems)
+                    @foreach (var placement in PreviewItems)
                     {
-                        <article class="preview-card">
+                        var item = placement.Worksheet;
+                        <article class="preview-card @(item.Layout == WorksheetLayout.Large ? "large" : null)"
+                                 style="grid-column:@(placement.Column + 1) / span @placement.ColumnSpan; grid-row:@(placement.Row + 1) / span @placement.RowSpan">
                             <header><strong>Nr @item.Number</strong><span>@item.TypeName</span></header>
                             <WorksheetPreview Visual="@(showingSolutions ? item.Solution : item.Task)"
                                               Label="@($"{(showingSolutions ? "Rozwiązanie" : "Zadanie")} {item.Number} — {item.TypeName}")" />
@@ -237,8 +239,11 @@
 
     private void CancelGeneration() => cancellation?.Cancel();
     private void RandomizeSeed() => seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
-    private int PreviewPageCount => Math.Max(1, (book?.Worksheets.Count + 5 ?? 0) / 6);
-    private IEnumerable<GeneratedWorksheet> PreviewItems => book?.Worksheets.Skip(previewPage * 6).Take(6) ?? [];
+    private IReadOnlyList<IReadOnlyList<WorksheetPlacement>> PreviewPages =>
+        book is null ? [] : BookLayout.PackWorksheets(book.Worksheets);
+    private int PreviewPageCount => Math.Max(1, PreviewPages.Count);
+    private IEnumerable<WorksheetPlacement> PreviewItems =>
+        PreviewPages.Count == 0 ? [] : PreviewPages[Math.Min(previewPage, PreviewPages.Count - 1)];
     private void PreviousPreviewPage() => previewPage = Math.Max(0, previewPage - 1);
     private void NextPreviewPage() => previewPage = Math.Min(PreviewPageCount - 1, previewPage + 1);
 
