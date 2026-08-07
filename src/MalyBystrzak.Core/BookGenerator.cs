@@ -58,7 +58,7 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
             var module = registry.GetRequired(selection.ModuleId);
             progress?.Report(new(completed, settings.Count,
                 $"Generuję {module.DisplayName}: {completed} z {settings.Count} gotowych"));
-            if (cooperative) await Task.Yield();
+            if (cooperative) await Task.Delay(16, cancellationToken);
             var errors = module.Validate(new(selection.VariantId, count, settings.Seed));
             if (errors.Count > 0) throw new ArgumentException(string.Join(" ", errors));
             var generated = settings.RelativeStars
@@ -68,7 +68,7 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
             queues[selection] = new Queue<GeneratedWorksheet>(generated);
             completed += count;
             progress?.Report(new(completed, settings.Count, $"Wygenerowano {completed} z {settings.Count} zadań"));
-            if (cooperative) await Task.Yield();
+            if (cooperative) await Task.Delay(16, cancellationToken);
         }
 
         var result = new List<GeneratedWorksheet>(settings.Count);

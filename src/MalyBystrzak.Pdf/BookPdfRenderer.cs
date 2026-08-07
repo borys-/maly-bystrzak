@@ -88,12 +88,12 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
             }
 
             progress?.Report(new(index + 1, total, $"Wyrenderowano {index + 1} z {pageCount} stron PDF"));
-            await Task.Yield();
+            await Task.Delay(16, cancellationToken);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
         progress?.Report(new(pageCount, total, "Zapisuję gotowy plik PDF…"));
-        await Task.Yield();
+        await Task.Delay(16, cancellationToken);
         var bytes = Save(pdf);
         progress?.Report(new(total, total, "PDF jest gotowy"));
         return bytes;

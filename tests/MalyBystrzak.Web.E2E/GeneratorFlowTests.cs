@@ -55,6 +55,30 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
     }
 
     [Fact]
+    public async Task ShowsIntermediateProgressWhileGeneratingMixedBook()
+    {
+        await Page.GotoAsync(server.BaseUrl);
+        foreach (var variant in new[] { "kakuro-3x3", "maze-9x9", "nonogram-5x5", "nonogram-10x10" })
+            await Page.GetByTestId($"variant-{variant}").ClickAsync();
+        await Page.GetByLabel("Liczba zadań").FillAsync("45");
+        await Page.EvaluateAsync("""
+            () => {
+                window.__progressValues = [];
+                window.__progressTimer = setInterval(() => {
+                    const value = document.querySelector('.config-card .progress-box progress')?.value;
+                    if (value !== undefined && !window.__progressValues.includes(value)) window.__progressValues.push(value);
+                }, 1);
+            }
+            """);
+
+        await Page.GetByTestId("generate").ClickAsync();
+        await Expect(Page.GetByTestId("result")).ToContainTextAsync("45 zadań", new() { Timeout = 60_000 });
+        var values = await Page.EvaluateAsync<int[]>("() => { clearInterval(window.__progressTimer); return window.__progressValues; }");
+
+        Assert.Contains(values, value => value is > 0 and < 100);
+    }
+
+    [Fact]
     public async Task LargePuzzleOccupiesTwoColumnsAndRows()
     {
         await Page.GotoAsync(server.BaseUrl);

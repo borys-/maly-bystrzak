@@ -231,16 +231,16 @@
         progressPercent = 0;
         cancellation = new CancellationTokenSource();
         await InvokeAsync(StateHasChanged);
-        await Task.Yield();
+        await Task.Delay(16);
         try
         {
             var settings = new BookGenerationSettings(title.Trim(), subtitle.Trim(), string.IsNullOrWhiteSpace(childName) ? null : childName.Trim(),
                 count, seed, selections, personalized ? scoreMin : null, personalized ? scoreMax : null, personalized, includeSolutions);
-            var progress = new Progress<GenerationProgress>(value =>
+            var progress = new ImmediateProgress<GenerationProgress>(value =>
             {
                 progressPercent = value.Percentage;
                 progressMessage = value.Message;
-                _ = InvokeAsync(StateHasChanged);
+                StateHasChanged();
             });
             book = await Generator.GenerateAsync(settings, progress, cancellation.Token);
             previewPages = BookLayout.PackWorksheets(book.Worksheets);
@@ -276,15 +276,15 @@
         exportProgressPercent = 0;
         exportProgressMessage = "Ładuję generator PDF…";
         await InvokeAsync(StateHasChanged);
-        await Task.Yield();
+        await Task.Delay(16);
         try
         {
             var document = source ?? book.CreateDocument();
-            var progress = new Progress<GenerationProgress>(value =>
+            var progress = new ImmediateProgress<GenerationProgress>(value =>
             {
                 exportProgressPercent = value.Percentage;
                 exportProgressMessage = value.Message;
-                _ = InvokeAsync(StateHasChanged);
+                StateHasChanged();
             });
             var bytes = await PdfExporter.RenderAsync(document, booklet, progress);
             await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", name, "application/pdf", bytes);
@@ -363,5 +363,10 @@
         public string Description { get; } = description;
         public string Symbol { get; } = symbol;
         public bool Selected { get; set; } = selected;
+    }
+
+    private sealed class ImmediateProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
     }
 }
