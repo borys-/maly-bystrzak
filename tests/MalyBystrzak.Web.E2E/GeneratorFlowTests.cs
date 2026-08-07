@@ -23,6 +23,7 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
         Assert.Contains("rel=\"canonical\" href=\"https://borys-.github.io/maly-bystrzak/\"", html, StringComparison.Ordinal);
         Assert.Contains("property=\"og:image\"", html, StringComparison.Ordinal);
         Assert.Contains("name=\"twitter:card\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("MalyBystrzak.Web.styles.css", html, StringComparison.Ordinal);
         Assert.Contains("<h1 id=\"seo-shell-title\">Stwórz łamigłówki dla dzieci do druku</h1>", html, StringComparison.Ordinal);
         Assert.Single(Regex.Matches(html, "<h1[\\s>]", RegexOptions.IgnoreCase));
 
@@ -36,8 +37,10 @@ public sealed class GeneratorFlowTests(WebServerFixture server) : PageTest, ICla
 
         var robots = await client.GetStringAsync($"{server.BaseUrl}/robots.txt");
         var sitemap = await client.GetStringAsync($"{server.BaseUrl}/sitemap.xml");
+        var appCss = await client.GetStringAsync($"{server.BaseUrl}/css/app.css");
         Assert.Contains("Sitemap: https://borys-.github.io/maly-bystrzak/sitemap.xml", robots);
         Assert.Contains("<loc>https://borys-.github.io/maly-bystrzak/</loc>", sitemap);
+        Assert.Contains(":root", appCss, StringComparison.Ordinal);
 
         using var manifest = JsonDocument.Parse(await client.GetStringAsync($"{server.BaseUrl}/manifest.webmanifest"));
         Assert.Equal("pl-PL", manifest.RootElement.GetProperty("lang").GetString());
