@@ -21,8 +21,7 @@ if (showHelp)
 var cli = options!;
 var previewPath = Path.Combine(cli.OutputDirectory, cli.PreviewFileName);
 var bookletPath = Path.Combine(cli.OutputDirectory, cli.BookletFileName);
-var reportPath = Path.Combine(cli.OutputDirectory, DifficultyReport.FileName);
-if (!cli.Overwrite && (File.Exists(previewPath) || File.Exists(bookletPath) || File.Exists(reportPath)))
+if (!cli.Overwrite && (File.Exists(previewPath) || File.Exists(bookletPath)))
 {
     Console.Error.WriteLine("Błąd: pliki wynikowe już istnieją. Użyj --overwrite, aby je zastąpić.");
     return 3;
@@ -41,12 +40,10 @@ try
     var renderer = new BookPdfRenderer();
     File.WriteAllBytes(previewPath, renderer.RenderPreview(document));
     File.WriteAllBytes(bookletPath, renderer.RenderBooklet(document));
-    File.WriteAllBytes(reportPath, DifficultyReport.Create(book.Worksheets));
 
     Console.WriteLine($"Gotowe. Utworzono {document.Pages.Count} stron A5.");
     Console.WriteLine($"Podgląd:  {previewPath}");
     Console.WriteLine($"Broszura: {bookletPath}");
-    Console.WriteLine($"Raport:    {reportPath}");
     return 0;
 }
 catch (Exception exception)

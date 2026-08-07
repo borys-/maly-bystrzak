@@ -9,7 +9,7 @@ Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
 - podgląd PDF A5 w naturalnej kolejności;
 - broszura PDF A4 z impozycją do druku dwustronnego;
 - sześcioslotowy układ strony; Nonogram 7×7 i 10×10 oraz Labirynt 15×15 zajmują po cztery sloty;
-- raport trudności CSV;
+- raport trudności dostępny bezpośrednio w aplikacji;
 - personalizacja tytułu, podtytułu i imienia dziecka;
 - zakres wyniku trudności i względne gwiazdki;
 - lokalny zapis projektów w IndexedDB;
@@ -18,7 +18,7 @@ Docelowy adres aplikacji: <https://borys-.github.io/maly-bystrzak/>
 
 Treść książeczek i zapisane projekty nie są wysyłane poza urządzenie użytkownika.
 
-Wynik trudności 0–100 jest normalizowany percentylowo osobno dla każdego wariantu, dzięki czemu można sensownie mieszać różne rodzaje zadań. Raport CSV zachowuje również nieobcięty wynik techniczny modułu, przeznaczony do przyszłej kalibracji na podstawie czasu, błędów i podpowiedzi.
+Wynik trudności 0–100 jest normalizowany percentylowo osobno dla każdego wariantu, dzięki czemu można sensownie mieszać różne rodzaje zadań. Raport na stronie pokazuje wynik i składowe trudności każdego zadania bez pól do ręcznego uzupełniania.
 
 ## Architektura
 

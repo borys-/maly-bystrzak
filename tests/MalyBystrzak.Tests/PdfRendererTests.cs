@@ -97,16 +97,6 @@ public class PdfRendererTests
         Assert.Equal(2, pdf.PageCount);
     }
 
-    [Fact]
-    public void CsvContainsEveryWorksheet()
-    {
-        var worksheets = new SudokuModule().Generate(new("4x4", 6, 7));
-        var csv = Encoding.UTF8.GetString(DifficultyReport.Create(worksheets));
-        Assert.Contains("Numer;Typ;Wynik_0_100", csv);
-        Assert.Contains("Wynik_techniczny", csv);
-        Assert.Equal(7, csv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
-    }
-
     private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
     {
         public void Report(T value) => report(value);
