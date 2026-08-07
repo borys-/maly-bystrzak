@@ -36,6 +36,14 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
 {
     public GeneratedBook Generate(BookGenerationSettings settings, IProgress<GenerationProgress>? progress = null,
         CancellationToken cancellationToken = default)
+        => GenerateCoreAsync(settings, progress, cancellationToken, false).GetAwaiter().GetResult();
+
+    public Task<GeneratedBook> GenerateAsync(BookGenerationSettings settings,
+        IProgress<GenerationProgress>? progress = null, CancellationToken cancellationToken = default)
+        => GenerateCoreAsync(settings, progress, cancellationToken, true);
+
+    private async Task<GeneratedBook> GenerateCoreAsync(BookGenerationSettings settings,
+        IProgress<GenerationProgress>? progress, CancellationToken cancellationToken, bool cooperative)
     {
         Validate(settings);
         var required = settings.Selections.ToDictionary(selection => selection, _ => 0);
@@ -48,6 +56,9 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var module = registry.GetRequired(selection.ModuleId);
+            progress?.Report(new(completed, settings.Count,
+                $"Generuję {module.DisplayName}: {completed} z {settings.Count} gotowych"));
+            if (cooperative) await Task.Yield();
             var errors = module.Validate(new(selection.VariantId, count, settings.Seed));
             if (errors.Count > 0) throw new ArgumentException(string.Join(" ", errors));
             var generated = settings.RelativeStars
@@ -57,6 +68,7 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
             queues[selection] = new Queue<GeneratedWorksheet>(generated);
             completed += count;
             progress?.Report(new(completed, settings.Count, $"Wygenerowano {completed} z {settings.Count} zadań"));
+            if (cooperative) await Task.Yield();
         }
 
         var result = new List<GeneratedWorksheet>(settings.Count);
@@ -78,6 +90,7 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
         result = BookLayout.ArrangeForFullPages(result)
             .Select((item, index) => item with { Number = index + 1 })
             .ToList();
+        progress?.Report(new(settings.Count, settings.Count, $"Gotowe: {settings.Count} zadań"));
         return new(settings, result);
     }
 

@@ -86,6 +86,24 @@ public class BookGeneratorTests
     }
 
     [Fact]
+    public async Task AsyncGenerationKeepsSeedAndReportsRealBatches()
+    {
+        var settings = Settings(18, 13579, AllTypes);
+        var generator = new BookGenerator(Registry());
+        var reports = new List<GenerationProgress>();
+
+        var asyncBook = await generator.GenerateAsync(settings, new InlineProgress<GenerationProgress>(reports.Add));
+        var syncBook = generator.Generate(settings);
+
+        Assert.Equal(syncBook.Worksheets.Select(item => item.Fingerprint),
+            asyncBook.Worksheets.Select(item => item.Fingerprint));
+        Assert.Equal(0, reports[0].Completed);
+        Assert.Equal(settings.Count, reports[^1].Completed);
+        Assert.Contains(reports, report => report.Completed is > 0 and < 18);
+        Assert.Equal(reports.Select(report => report.Completed).Order(), reports.Select(report => report.Completed));
+    }
+
+    [Fact]
     public void ProjectRoundTripsWithPolymorphicVisuals()
     {
         var book = Generate(4, 123, [new("sudoku", "4x4")]);

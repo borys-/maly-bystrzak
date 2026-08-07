@@ -51,6 +51,54 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         return Save(pdf);
     }
 
+    public Task<byte[]> RenderPreviewAsync(BookDocument document, IProgress<GenerationProgress>? progress = null,
+        CancellationToken cancellationToken = default) => RenderAsync(document, false, progress, cancellationToken);
+
+    public Task<byte[]> RenderBookletAsync(BookDocument document, IProgress<GenerationProgress>? progress = null,
+        CancellationToken cancellationToken = default) => RenderAsync(document, true, progress, cancellationToken);
+
+    private static async Task<byte[]> RenderAsync(BookDocument document, bool booklet,
+        IProgress<GenerationProgress>? progress, CancellationToken cancellationToken)
+    {
+        using var pdf = CreateDocument(document, booklet ? "Broszura A4" : "Podgląd A5");
+        var sides = BookLayout.CreateBookletOrder(document.Pages.Count);
+        var pageCount = booklet ? sides.Count : document.Pages.Count;
+        var total = pageCount + 1;
+
+        for (var index = 0; index < pageCount; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var page = pdf.AddPage();
+            page.Width = XUnit.FromPoint(booklet ? A5Width * 2 : A5Width);
+            page.Height = XUnit.FromPoint(A5Height);
+            using var graphics = XGraphics.FromPdfPage(page);
+            if (booklet)
+            {
+                var side = sides[index];
+                DrawLogicalPage(graphics, document.Pages[side.LeftPage - 1], document.Settings, document.Instructions,
+                    side.LeftPage - 1, 0, 0, 1);
+                graphics.DrawLine(new XPen(Color("#e5e7eb"), .5), A5Width, 0, A5Width, A5Height);
+                DrawLogicalPage(graphics, document.Pages[side.RightPage - 1], document.Settings, document.Instructions,
+                    side.RightPage - 1, A5Width, 0, 1);
+            }
+            else
+            {
+                DrawLogicalPage(graphics, document.Pages[index], document.Settings, document.Instructions,
+                    index, 0, 0, 1);
+            }
+
+            progress?.Report(new(index + 1, total, $"Wyrenderowano {index + 1} z {pageCount} stron PDF"));
+            await Task.Yield();
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        progress?.Report(new(pageCount, total, "Zapisuję gotowy plik PDF…"));
+        await Task.Yield();
+        var bytes = Save(pdf);
+        progress?.Report(new(total, total, "PDF jest gotowy"));
+        return bytes;
+    }
+
     private static PdfDocument CreateDocument(BookDocument document, string variant)
     {
         var pdf = new PdfDocument();

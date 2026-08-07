@@ -9,6 +9,25 @@ namespace MalyBystrzak.Tests;
 public class PdfRendererTests
 {
     [Fact]
+    public async Task AsyncRendererReportsRenderedPagesAndProducesValidPdf()
+    {
+        var registry = new WorksheetModuleRegistry([new SudokuModule()]);
+        var book = new BookGenerator(registry).Generate(new("Test", "Zadania", null, 12, 12345,
+            [new("sudoku", "4x4")], IncludeSolutions: true));
+        var document = book.CreateDocument();
+        var reports = new List<GenerationProgress>();
+        var renderer = new BookPdfRenderer();
+
+        var bytes = await renderer.RenderPreviewAsync(document, new InlineProgress<GenerationProgress>(reports.Add));
+
+        using var pdf = PdfReader.Open(new MemoryStream(bytes));
+        Assert.Equal(document.Pages.Count, pdf.PageCount);
+        Assert.Equal(document.Pages.Count + 1, reports[^1].Total);
+        Assert.Equal(reports[^1].Total, reports[^1].Completed);
+        Assert.Equal("PDF jest gotowy", reports[^1].Message);
+    }
+
+    [Fact]
     public void SharedRendererCreatesPreviewAndBookletBytes()
     {
         var registry = new WorksheetModuleRegistry([new SudokuModule()]);
@@ -86,5 +105,10 @@ public class PdfRendererTests
         Assert.Contains("Numer;Typ;Wynik_0_100", csv);
         Assert.Contains("Wynik_techniczny", csv);
         Assert.Equal(7, csv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
+    }
+
+    private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
     }
 }

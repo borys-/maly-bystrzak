@@ -7,10 +7,13 @@ public sealed class PdfExportService(LazyAssemblyLoader assemblyLoader)
 {
     private Task<IBookPdfRenderer>? rendererTask;
 
-    public async ValueTask<byte[]> RenderAsync(BookDocument document, bool booklet)
+    public async ValueTask<byte[]> RenderAsync(BookDocument document, bool booklet,
+        IProgress<GenerationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         var renderer = await GetRendererAsync();
-        return booklet ? renderer.RenderBooklet(document) : renderer.RenderPreview(document);
+        return booklet
+            ? await renderer.RenderBookletAsync(document, progress, cancellationToken)
+            : await renderer.RenderPreviewAsync(document, progress, cancellationToken);
     }
 
     public async Task WarmUpAsync()

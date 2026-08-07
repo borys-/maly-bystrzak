@@ -135,6 +135,13 @@
                         <button @onclick="DownloadCsvAsync">Raport CSV</button>
                     </div>
                 </div>
+                @if (isExporting)
+                {
+                    <div class="progress-box export-progress" aria-live="polite">
+                        <div><span>@exportProgressMessage</span><strong>@exportProgressPercent%</strong></div>
+                        <progress max="100" value="@exportProgressPercent"></progress>
+                    </div>
+                }
                 <div class="save-project">
                     <input aria-label="Nazwa projektu" maxlength="60" @bind="projectName" />
                     <button data-testid="save-project" @onclick="SaveProjectAsync">@(activeProjectId is null ? "Zapisz projekt" : "Nadpisz projekt")</button>
@@ -192,6 +199,8 @@
     private bool isExporting;
     private int progressPercent;
     private string progressMessage = "Przygotowuję zadania…";
+    private int exportProgressPercent;
+    private string exportProgressMessage = "Ładuję generator PDF…";
     private string? error;
     private string? message;
     private CancellationTokenSource? cancellation;
@@ -233,7 +242,7 @@
                 progressMessage = value.Message;
                 _ = InvokeAsync(StateHasChanged);
             });
-            book = Generator.Generate(settings, progress, cancellation.Token);
+            book = await Generator.GenerateAsync(settings, progress, cancellation.Token);
             previewPages = BookLayout.PackWorksheets(book.Worksheets);
             previewPage = 0;
             showingSolutions = false;
@@ -264,12 +273,20 @@
     {
         if (book is null) return;
         isExporting = true;
+        exportProgressPercent = 0;
+        exportProgressMessage = "Ładuję generator PDF…";
         await InvokeAsync(StateHasChanged);
         await Task.Yield();
         try
         {
             var document = source ?? book.CreateDocument();
-            var bytes = await PdfExporter.RenderAsync(document, booklet);
+            var progress = new Progress<GenerationProgress>(value =>
+            {
+                exportProgressPercent = value.Percentage;
+                exportProgressMessage = value.Message;
+                _ = InvokeAsync(StateHasChanged);
+            });
+            var bytes = await PdfExporter.RenderAsync(document, booklet, progress);
             await JS.InvokeVoidAsync("malyBystrzak.downloadBytes", name, "application/pdf", bytes);
         }
         catch (Exception exception) { error = $"Nie udało się utworzyć PDF: {exception.Message}"; }
