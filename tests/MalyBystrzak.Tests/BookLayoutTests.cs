@@ -33,6 +33,31 @@ public class BookLayoutTests
         Assert.Equal(Enumerable.Range(1, pageCount).Order(), sides.SelectMany(side => new[] { side.LeftPage, side.RightPage }).Order());
     }
 
+    [Fact]
+    public void LargeWorksheetOccupiesFourSlots()
+    {
+        var worksheets = FakeWorksheets(3).ToArray();
+        worksheets[2] = worksheets[2] with { Layout = WorksheetLayout.Large };
+
+        var page = Assert.Single(BookLayout.PackWorksheets(worksheets));
+        var large = Assert.Single(page, placement => placement.Worksheet.Layout == WorksheetLayout.Large);
+
+        Assert.Equal((0, 1, 2, 2), (large.Column, large.Row, large.ColumnSpan, large.RowSpan));
+    }
+
+    [Fact]
+    public void LargeWorksheetMovesToNextPageWhenNoTwoByTwoAreaRemains()
+    {
+        var worksheets = FakeWorksheets(4).ToArray();
+        worksheets[3] = worksheets[3] with { Layout = WorksheetLayout.Large };
+
+        var pages = BookLayout.PackWorksheets(worksheets);
+
+        Assert.Equal(2, pages.Count);
+        Assert.Equal(3, pages[0].Count);
+        Assert.Single(pages[1]);
+    }
+
     private static IReadOnlyList<GeneratedWorksheet> FakeWorksheets(int count)
     {
         var visual = new WorksheetVisual(100, 100, []);

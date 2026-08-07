@@ -76,10 +76,10 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
                 DrawCover(graphics, bounds, settings, instructions);
                 break;
             case BookPageKind.Worksheets:
-                DrawWorksheetPage(graphics, bounds, page.Worksheets!, false, pageIndex);
+                DrawWorksheetPage(graphics, bounds, page.Placements!, false, pageIndex);
                 break;
             case BookPageKind.Solutions:
-                DrawWorksheetPage(graphics, bounds, page.Worksheets!, true, pageIndex);
+                DrawWorksheetPage(graphics, bounds, page.Placements!, true, pageIndex);
                 break;
             case BookPageKind.BackCover:
                 DrawBackCover(graphics, bounds, settings, instructions);
@@ -107,7 +107,7 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         graphics.DrawRectangle(Brush("#f15a8a"), page.X + 62 + stripeWidth * 2, stripeY, stripeWidth, 16);
     }
 
-    private static void DrawWorksheetPage(XGraphics graphics, XRect page, IReadOnlyList<GeneratedWorksheet> worksheets,
+    private static void DrawWorksheetPage(XGraphics graphics, XRect page, IReadOnlyList<WorksheetPlacement> placements,
         bool solutions, int pageIndex)
     {
         var title = solutions ? "Rozwiązania" : "Zadania dla małych bystrzaków";
@@ -117,13 +117,13 @@ public sealed class BookPdfRenderer : IBookPdfRenderer
         var contentY = page.Y + 38;
         var cardWidth = (page.Width - 32 - gap) / 2;
         var cardHeight = (page.Height - 72 - gap * 2) / 3;
-        for (var slot = 0; slot < 6; slot++)
+        foreach (var placement in placements)
         {
-            var row = slot / 2;
-            var column = slot % 2;
-            var card = new XRect(contentX + column * (cardWidth + gap), contentY + row * (cardHeight + gap), cardWidth, cardHeight);
-            if (slot < worksheets.Count) DrawCard(graphics, card, worksheets[slot], solutions);
-            else graphics.DrawRectangle(new XPen(Color("#e5e7eb"), 1), card);
+            var card = new XRect(contentX + placement.Column * (cardWidth + gap),
+                contentY + placement.Row * (cardHeight + gap),
+                cardWidth * placement.ColumnSpan + gap * (placement.ColumnSpan - 1),
+                cardHeight * placement.RowSpan + gap * (placement.RowSpan - 1));
+            DrawCard(graphics, card, placement.Worksheet, solutions);
         }
         DrawCentered(graphics, solutions ? "Sprawdź odpowiedzi po rozwiązaniu zadań." : "Powodzenia! Każde zadanie ma jedno rozwiązanie.",
             6.5, false, "#25316d", page.X + 35, page.Bottom - 24, page.Width - 70, 12);
