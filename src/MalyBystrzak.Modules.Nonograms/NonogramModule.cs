@@ -51,13 +51,14 @@ public sealed class NonogramModule : IWorksheetModule
         var elements = new List<VisualElement>();
         elements.Add(new VisualRectangle(2, clueMargin, clueMargin - 4, gridSize, "#f4f7ff", "none"));
         elements.Add(new VisualRectangle(clueMargin, 2, gridSize, clueMargin - 4, "#f4f7ff", "none"));
+        elements.Add(new VisualRectangle(clueMargin, clueMargin, gridSize, gridSize, "#fffefa", "none"));
         for (var row = 0; row < puzzle.Size; row++)
         for (var column = 0; column < puzzle.Size; column++)
         {
+            if (!solution || !puzzle.Cells[row * puzzle.Size + column]) continue;
             var x = clueMargin + column * cell;
             var y = clueMargin + row * cell;
-            var filled = solution && puzzle.Cells[row * puzzle.Size + column];
-            elements.Add(new VisualRectangle(x, y, cell, cell, filled ? "#25316d" : "#fffefa", "#25316d", 0));
+            elements.Add(new VisualRectangle(x, y, cell, cell, "#25316d", "none"));
         }
         for (var index = 0; index <= puzzle.Size; index++)
         {
