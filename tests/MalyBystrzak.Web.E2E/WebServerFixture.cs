@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
 using Xunit;
 
 namespace MalyBystrzak.Web.E2E;
@@ -10,10 +11,11 @@ public sealed class WebServerFixture : IAsyncLifetime
     private HttpListener? listener;
     private CancellationTokenSource? serverCancellation;
     private Task? serverTask;
-    public string BaseUrl { get; } = "http://127.0.0.1:5280";
+    public string BaseUrl { get; private set; } = string.Empty;
 
     public async Task InitializeAsync()
     {
+        BaseUrl = $"http://127.0.0.1:{FindAvailablePort()}";
         var root = FindRepositoryRoot();
         var publishedDirectory = Environment.GetEnvironmentVariable("MALY_BYSTRZAK_PUBLISHED_DIR");
         if (!string.IsNullOrWhiteSpace(publishedDirectory))
@@ -126,5 +128,13 @@ public sealed class WebServerFixture : IAsyncLifetime
         while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "MalyBystrzak.sln")))
             directory = directory.Parent;
         return directory?.FullName ?? throw new DirectoryNotFoundException("Nie znaleziono katalogu solution.");
+    }
+
+    private static int FindAvailablePort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        try { return ((IPEndPoint)listener.LocalEndpoint).Port; }
+        finally { listener.Stop(); }
     }
 }
