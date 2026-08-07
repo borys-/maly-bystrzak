@@ -84,18 +84,22 @@ public sealed class WordPathModule : IWorksheetModule
                 5.5, 5.5, "none", "#f15a8a", 1.1));
         }
         var arrows = puzzle.Path.Zip(puzzle.Path.Skip(1), (a, b) => b.Row < a.Row ? "↑" : b.Row > a.Row ? "↓" : b.Column < a.Column ? "←" : "→").ToArray();
-        e.Add(PuzzleSupport.Text(86, 10, "START", 4.2, true, "#f15a8a"));
-        e.Add(PuzzleSupport.Text(86, 25, string.Join(' ', arrows.Take(4)), 4.5));
-        e.Add(PuzzleSupport.Text(86, 37, string.Join(' ', arrows.Skip(4)), 4.5));
-        e.Add(PuzzleSupport.Text(51, 76, "HASŁO", 4.2, true, "#19a88e", "end"));
-        PuzzleSupport.AnswerBox(e, 54, 67, 45, 14, solution ? puzzle.Word : null);
+        e.Add(PuzzleSupport.Text(77, 9, "1. START", 4.2, true, "#f15a8a", "start"));
+        e.Add(PuzzleSupport.Text(77, 16, "różowe pole", 3.2, false, "#6b7280", "start"));
+        e.Add(PuzzleSupport.Text(77, 27, "2. KOD", 3.8, true, "#25316d", "start"));
+        e.Add(PuzzleSupport.Text(77, 33, "STRZAŁEK", 3.8, true, "#25316d", "start"));
+        e.Add(PuzzleSupport.Text(77, 44, string.Join(' ', arrows.Take(4)), 4.5, true, "#25316d", "start"));
+        e.Add(PuzzleSupport.Text(77, 55, string.Join(' ', arrows.Skip(4).Take(4)), 4.5, true, "#25316d", "start"));
+        e.Add(PuzzleSupport.Text(77, 66, string.Join(' ', arrows.Skip(8)), 4.5, true, "#25316d", "start"));
+        e.Add(PuzzleSupport.Text(25, 83, "3. HASŁO", 4.2, true, "#19a88e", "end"));
+        PuzzleSupport.AnswerBox(e, 29, 72, 70, 17, solution ? puzzle.Word : null);
         if (solution)
         {
             var start = puzzle.Path[0];
             e.Add(new VisualEllipse(x0 + start.Column * cell + cell / 2, y0 + start.Row * cell + cell / 2,
                 5, 5, "none", "#f15a8a", 1.2));
         }
-        return new(102, 84, e);
+        return new(102, 94, e);
     }
 }
 
