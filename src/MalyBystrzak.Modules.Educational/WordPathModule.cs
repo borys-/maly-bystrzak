@@ -106,7 +106,7 @@ public sealed class WordPathModule : IWorksheetModule
     {
         var e = new List<VisualElement>();
         var cell = puzzle.Columns switch { 5 => 13d, 6 => 11d, _ => 9.5d };
-        const double x0 = 2; const double y0 = 12;
+        const double x0 = 2; const double y0 = 31;
         for (var row = 0; row < puzzle.Rows; row++) for (var column = 0; column < puzzle.Columns; column++)
         {
             var point = new GridPoint(row, column); var pathIndex = puzzle.Path.IndexOf(point);
@@ -119,19 +119,17 @@ public sealed class WordPathModule : IWorksheetModule
         }
         var arrows = puzzle.Path.Zip(puzzle.Path.Skip(1), (a, b) => b.Row < a.Row ? "↑" : b.Row > a.Row ? "↓" : b.Column < a.Column ? "←" : "→").ToArray();
         var start = puzzle.Path[0];
-        e.Add(PuzzleSupport.Text(x0 + start.Column * cell + cell / 2, 8, "START", 3.8, true, "#f15a8a"));
+        e.Add(PuzzleSupport.Text(71, 10, "KOD STRZAŁEK", 4, true, "#25316d"));
+        e.Add(PuzzleSupport.Text(39, 23, "START", 4, true, "#f15a8a", "end"));
+        e.Add(PuzzleSupport.Text(44, 23, string.Join(' ', arrows), 5, true, "#25316d", "start"));
         const double panelCenter = 108;
-        e.Add(PuzzleSupport.Text(panelCenter, 15, "KOD STRZAŁEK", 3.8, true, "#25316d"));
-        e.Add(PuzzleSupport.Text(panelCenter, 29, string.Join(' ', arrows.Take(4)), 5, true, "#25316d"));
-        e.Add(PuzzleSupport.Text(panelCenter, 41, string.Join(' ', arrows.Skip(4).Take(4)), 5, true, "#25316d"));
-        e.Add(PuzzleSupport.Text(panelCenter, 53, string.Join(' ', arrows.Skip(8)), 5, true, "#25316d"));
-        e.Add(PuzzleSupport.Text(panelCenter, 68, "WPISZ HASŁO", 4, true, "#19a88e"));
+        e.Add(PuzzleSupport.Text(panelCenter, 42, "WPISZ HASŁO", 4, true, "#19a88e"));
         const double answerAreaX = 76; const double answerAreaWidth = 64; const double gap = 1;
         var boxWidth = Math.Min(9, (answerAreaWidth - gap * (puzzle.Word.Length - 1)) / puzzle.Word.Length);
         var boxesWidth = puzzle.Word.Length * boxWidth + (puzzle.Word.Length - 1) * gap;
         var boxesX = answerAreaX + (answerAreaWidth - boxesWidth) / 2;
         for (var index = 0; index < puzzle.Word.Length; index++)
-            PuzzleSupport.AnswerBox(e, boxesX + index * (boxWidth + gap), 74, boxWidth, 15,
+            PuzzleSupport.AnswerBox(e, boxesX + index * (boxWidth + gap), 49, boxWidth, 15,
                 solution ? puzzle.Word[index].ToString() : null);
         if (solution)
         {
