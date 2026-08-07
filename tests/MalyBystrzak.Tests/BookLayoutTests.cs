@@ -58,6 +58,33 @@ public class BookLayoutTests
         Assert.Single(pages[1]);
     }
 
+    [Fact]
+    public void FullPagesArePlacedBeforePagesWithFreeSlots()
+    {
+        var worksheets = FakeWorksheets(6).ToArray();
+        worksheets[0] = worksheets[0] with { Layout = WorksheetLayout.Large };
+        worksheets[1] = worksheets[1] with { Layout = WorksheetLayout.Large };
+        worksheets[2] = worksheets[2] with { Layout = WorksheetLayout.Large };
+
+        var pages = BookLayout.PackWorksheets(BookLayout.ArrangeForFullPages(worksheets));
+        var usedSlots = pages.Select(page => page.Sum(item => item.ColumnSpan * item.RowSpan)).ToArray();
+
+        Assert.Equal(6, usedSlots[0]);
+        Assert.Equal(new[] { 6, 5, 4 }, usedSlots);
+    }
+
+    [Fact]
+    public void LargeAndStandardWorksheetsFillEveryPageWhenCountsMatch()
+    {
+        var worksheets = FakeWorksheets(12).ToArray();
+        for (var index = 0; index < 4; index++) worksheets[index] = worksheets[index] with { Layout = WorksheetLayout.Large };
+
+        var pages = BookLayout.PackWorksheets(BookLayout.ArrangeForFullPages(worksheets));
+
+        Assert.Equal(4, pages.Count);
+        Assert.All(pages, page => Assert.Equal(6, page.Sum(item => item.ColumnSpan * item.RowSpan)));
+    }
+
     private static IReadOnlyList<GeneratedWorksheet> FakeWorksheets(int count)
     {
         var visual = new WorksheetVisual(100, 100, []);

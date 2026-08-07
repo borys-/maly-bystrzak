@@ -27,14 +27,14 @@ public class BookGeneratorTests
     }
 
     [Fact]
-    public void MixedBookCyclesThroughSelectedTypesAndKeepsGlobalNumbering()
+    public void MixedBookFillsPagesAndKeepsGlobalNumbering()
     {
         var book = Generate(45, 112233, AllTypes);
         Assert.Equal(Enumerable.Range(1, 45), book.Worksheets.Select(item => item.Number));
         Assert.All(AllTypes, selection => Assert.Equal(5, book.Worksheets.Count(item =>
             item.ModuleId == selection.ModuleId && item.VariantId == selection.VariantId)));
-        for (var index = 0; index < book.Worksheets.Count; index++)
-            Assert.Equal(AllTypes[index % AllTypes.Length].VariantId, book.Worksheets[index].VariantId);
+        var pages = BookLayout.PackWorksheets(book.Worksheets);
+        Assert.All(pages, page => Assert.Equal(6, page.Sum(item => item.ColumnSpan * item.RowSpan)));
     }
 
     [Fact]

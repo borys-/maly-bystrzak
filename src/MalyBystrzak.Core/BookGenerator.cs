@@ -75,6 +75,9 @@ public sealed class BookGenerator(WorksheetModuleRegistry registry)
             for (var index = 0; index < result.Count; index++)
                 result[index] = result[index] with { Number = index + 1, DisplayStars = RelativeStars(index, result.Count) };
         }
+        result = BookLayout.ArrangeForFullPages(result)
+            .Select((item, index) => item with { Number = index + 1 })
+            .ToList();
         return new(settings, result);
     }
 

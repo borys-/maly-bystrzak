@@ -9,6 +9,32 @@ public sealed record BookDocument(BookGenerationSettings Settings, IReadOnlyList
 
 public static class BookLayout
 {
+    public static IReadOnlyList<GeneratedWorksheet> ArrangeForFullPages(
+        IReadOnlyList<GeneratedWorksheet> worksheets)
+    {
+        var large = new Queue<GeneratedWorksheet>(worksheets.Where(item => item.Layout == WorksheetLayout.Large));
+        var standard = new Queue<GeneratedWorksheet>(worksheets.Where(item => item.Layout == WorksheetLayout.Standard));
+        var arranged = new List<GeneratedWorksheet>(worksheets.Count);
+
+        while (large.Count > 0 && standard.Count >= 2)
+        {
+            arranged.Add(large.Dequeue());
+            arranged.Add(standard.Dequeue());
+            arranged.Add(standard.Dequeue());
+        }
+        while (standard.Count >= 6)
+            for (var slot = 0; slot < 6; slot++) arranged.Add(standard.Dequeue());
+
+        while (large.Count > 0)
+        {
+            arranged.Add(large.Dequeue());
+            for (var slot = 0; slot < 2 && standard.Count > 0; slot++) arranged.Add(standard.Dequeue());
+        }
+        while (standard.Count > 0) arranged.Add(standard.Dequeue());
+
+        return arranged;
+    }
+
     public static IReadOnlyList<BookPage> BuildPages(IReadOnlyList<GeneratedWorksheet> worksheets, bool includeSolutions = true)
     {
         var pages = new List<BookPage> { new(BookPageKind.FrontCover) };
